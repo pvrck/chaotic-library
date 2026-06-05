@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { BookOpen, Search, Loader2, Plus, Sparkles } from 'lucide-react';
-import { BookFormat, BookStatus } from '../types';
+import { BookFormat, BookStatus } from '@/types';
 
 interface AddBookFormProps {
   onBookAdded: () => void;

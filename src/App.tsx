@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabaseClient';
 import Auth from './components/Auth';
 import { LogOut, Loader2 } from 'lucide-react';
-import AddBookForm from './components/AddBookForm';
+import AddBookForm from '@/components/AddBookForm';
 
 export default function App() {
   const [sessionLoading, setSessionLoading] = useState(true);
