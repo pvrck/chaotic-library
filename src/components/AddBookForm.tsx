@@ -66,8 +66,6 @@ export default function AddBookForm({ onBookAdded }: AddBookFormProps) {
     }
   };
 
-  console.log('test');
-
   // Soumission à Supabase
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

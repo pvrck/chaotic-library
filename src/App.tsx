@@ -37,7 +37,7 @@ export default function App() {
   const handleBookStatusChanged = (nextStatus: string) => {
     if (nextStatus === 'Lu') {
       // 🎉 C'est ici qu'on branchera l'algo des Défis du Chaos à la prochaine étape !
-      console.log('Un livre a été terminé ! Lancement potentiel du désordre...');
+      console.warn('Un livre a été terminé ! Lancement potentiel du désordre...');
     }
   };
 
