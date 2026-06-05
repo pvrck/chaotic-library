@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabaseClient';
 import Auth from './components/Auth';
 import { LogOut, Loader2 } from 'lucide-react';
+import AddBookForm from './components/AddBookForm';
 
 export default function App() {
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -16,7 +17,9 @@ export default function App() {
     });
 
     // 2. Écoute les changements d'état (login, logout...)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
@@ -55,10 +58,8 @@ export default function App() {
         </button>
       </header>
 
-      <main className="max-w-6xl mx-auto text-center py-20 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl">
-        <p className="text-xl text-slate-500">
-          Connexion OK ! Prochaine étape : le module d'Ajout de livres ou le Chaos tracker.
-        </p>
+      <main className="max-w-6xl mx-auto py-6">
+        <AddBookForm onBookAdded={() => alert('Livre ajouté avec succès dans Supabase !')} />
       </main>
     </div>
   );

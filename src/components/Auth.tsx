@@ -18,9 +18,9 @@ export default function Auth() {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setMessage({ 
-          type: 'success', 
-          text: 'Inscription réussie ! Vérifie ta boîte mail pour valider ton compte.' 
+        setMessage({
+          type: 'success',
+          text: 'Inscription réussie ! Vérifie ta boîte mail pour valider ton compte.',
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -44,17 +44,21 @@ export default function Auth() {
             {isSignUp ? 'Créer un compte' : 'Chaotic Library'}
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            {isSignUp ? 'Rejoins le club de lecture' : 'Suivi de lecture pour les maniaques du livre'}
+            {isSignUp
+              ? 'Rejoins le club de lecture'
+              : 'Suivi de lecture pour les maniaques du livre'}
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleAuth}>
           {message && (
-            <div className={`p-4 rounded-xl text-sm ${
-              message.type === 'success' 
-                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' 
-                : 'bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400'
-            }`}>
+            <div
+              className={`p-4 rounded-xl text-sm ${
+                message.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
+                  : 'bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400'
+              }`}
+            >
               {message.text}
             </div>
           )}
