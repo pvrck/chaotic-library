@@ -54,8 +54,9 @@ export default function ProfileSettings({ profile, onProfileUpdate }: ProfileSet
 
       setStatusMsg({ type: 'success', text: 'Profil mis à jour avec succès ! ✨' });
       onProfileUpdate();
-    } catch (err) {
-      setStatusMsg({ type: 'error', text: err.message || 'Erreur lors de la mise à jour.' });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
+      setStatusMsg({ type: 'error', text: errorMessage || 'Erreur lors de la mise à jour.' });
     } finally {
       setLoading(false);
     }
@@ -80,8 +81,9 @@ export default function ProfileSettings({ profile, onProfileUpdate }: ProfileSet
       setStatusMsg({ type: 'success', text: 'Votre mot de passe a été modifié ! 🔐' });
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err) {
-      setStatusMsg({ type: 'error', text: err.message || 'Erreur mot de passe.' });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
+      setStatusMsg({ type: 'error', text: errorMessage || 'Erreur mot de passe.' });
     } finally {
       setLoading(false);
     }

@@ -56,7 +56,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
         .from('user_challenges')
         .select('id, status, challenge_pool(*)')
         .eq('user_id', user.id)
-        .ne('status', 'en_cours');
+        .neq('status', 'en_cours');
 
       if (error) throw error;
 
@@ -65,12 +65,16 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
         const randomIndex = Math.floor(Math.random() * userChallenges.length);
         const randomSelection = userChallenges[randomIndex];
 
-        // On type proprement l'objet plutôt que d'utiliser 'any'
-        const randomChallenge = randomSelection.challenge_pool as {
-          title: string;
-          xp_bonus?: number;
-          xp_malus?: number;
-        } | null;
+        const randomChallengeArray = randomSelection.challenge_pool as
+          | {
+              title: string;
+              xp_bonus?: number;
+              xp_malus?: number;
+            }[]
+          | null;
+
+        const randomChallenge =
+          randomChallengeArray && randomChallengeArray.length > 0 ? randomChallengeArray[0] : null;
 
         if (randomChallenge) {
           const { error: updateError } = await supabase

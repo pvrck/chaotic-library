@@ -88,7 +88,7 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
   // États pour l'édition d'un défi
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editDesc, setEditDesc] = useState('');
+  const [editDesc, setEditDesc] = useState<string | null>(null);
   const [editXpBonus, setEditXpBonus] = useState(0);
   const [editXpMalus, setEditXpMalus] = useState(0);
   const [editDuration, setEditDuration] = useState(0);
@@ -545,7 +545,7 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
                           )}
                         </div>
                         <textarea
-                          value={editDesc}
+                          value={editDesc ?? ''}
                           onChange={(e) => setEditDesc(e.target.value)}
                           rows={2}
                           className="w-full px-2 py-1 bg-white dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300"
