@@ -115,13 +115,49 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
         updateData.finished_at = new Date().toISOString();
       }
 
+      // 1. On applique la mise à jour du livre
       const { error } = await supabase.from('books').update(updateData).eq('id', id);
       if (error) throw error;
 
+      // 2. 📊 Machine à XP d'après ton fichier Excel !
+      let xpReward = 0;
+      if (nextStatus === 'En cours') {
+        xpReward = 5; // 📖 +5 XP quand on commence
+      } else if (nextStatus === 'Lu') {
+        xpReward = 120; // 🏆 +120 XP quand on termine
+
+        // 🔮 DETECTION DE LA SAGA SANS BOOLEEN !
+        // On récupère le livre concerné dans notre état pour checker son saga_name
+        const targetBook = books.find((b) => b.id === id);
+        if (targetBook && targetBook.saga_name && targetBook.saga_name.trim() !== '') {
+          xpReward += 30; // ⚔️ +30 XP Bonus de Saga !
+        }
+      }
+
+      // 3. On injecte l'XP sur le profil de l'utilisatrice
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user && xpReward > 0) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('xp')
+          .eq('id', user.id)
+          .single();
+
+        const currentXp = profile?.xp || 0;
+
+        await supabase
+          .from('profiles')
+          .update({ xp: currentXp + xpReward })
+          .eq('id', user.id);
+      }
+
+      // 4. Rafraîchissement des composants
       fetchBooks();
       onBookStatusChanged(nextStatus);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Impossible de mettre à jour le statut.';
+      const msg = error instanceof Error ? error.message : '';
       alert(msg);
     }
   };

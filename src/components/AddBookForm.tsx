@@ -72,42 +72,49 @@ export default function AddBookForm({ onBookAdded }: AddBookFormProps) {
     if (!title || !author) return;
     setLoading(true);
 
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Non connecté');
+    // 1. Récupérer l'utilisateur connecté
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const { error } = await supabase.from('books').insert([
-        {
-          user_id: user.id,
-          title,
-          author,
-          format,
-          status,
-          saga_name: sagaName || null,
-          saga_volume: sagaVolume ? parseInt(sagaVolume) : null,
-        },
-      ]);
+    // 2. Ton insertion existante (qui utilise déjà title, author, saga_name, etc.)
+    const { error: insertError } = await supabase.from('books').insert([
+      {
+        title,
+        author,
+        status: 'A lire', // Correspond à ton type BookStatus
+        format,
+        saga_name: sagaName.trim() || null,
+        saga_volume: sagaVolume ? parseInt(sagaVolume) : null,
+        user_id: user.id,
+      },
+    ]);
 
-      if (error) throw error;
+    if (insertError) throw insertError;
 
-      // Reset du formulaire après succès
-      setIsbnOrTitle('');
-      setTitle('');
-      setAuthor('');
-      setSagaName('');
-      setSagaVolume('');
-      setStatus('A lire');
+    // 3. 🎁 NOUVEAU : Calcul et attribution des +10 XP d'ajout !
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('xp')
+      .eq('id', user.id)
+      .single();
 
-      // Rafraîchir la liste des livres dans le parent
-      onBookAdded();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout";
-      alert(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    const currentXp = profile?.xp || 0;
+
+    await supabase
+      .from('profiles')
+      .update({ xp: currentXp + 10 }) // 👈 +10 XP par livre ajouté
+      .eq('id', user.id);
+
+    // 4. Reset tes champs de formulaire (adapte selon tes variables actuelles)
+    setTitle('');
+    setAuthor('');
+    setSagaName('');
+    setSagaVolume('');
+    onBookAdded();
+
+    alert('📚 Livre ajouté au réservoir ! (+10 XP)');
   };
 
   return (

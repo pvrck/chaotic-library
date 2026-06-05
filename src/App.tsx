@@ -1,46 +1,53 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { User } from '@supabase/supabase-js';
-import { Profile } from '@/types'; // <-- Import du type Profile
-import Auth from '@/components/Auth';
-import AddBookForm from '@/components/AddBookForm';
+import { Session } from '@supabase/supabase-js';
+import { Profile } from '@/types';
+import GameDashboard from '@/components/GameDashboard';
 import BookList from '@/components/BookList';
 import AdminChallengePool from '@/components/AdminChallengePool';
-import { LogOut, Loader2, ShieldCheck } from 'lucide-react';
+import { Loader2, BookOpen } from 'lucide-react';
+import AddBookForm from './components/AddBookForm';
 
 export default function App() {
-  const [sessionLoading, setSessionLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null); // <-- State pour le profil
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fonction pour charger le profil de l'utilisateur connecté
+  // Petit déclencheur pour synchroniser l'ajout de livres et la liste
+  const [refreshBooksTrigger, setRefreshBooksTrigger] = useState(0);
+
+  // 1. Fonction pour charger (ou recharger) le profil joueur
   const fetchProfile = async (userId: string) => {
     try {
+      // On ajoute un sélecteur de colonnes explicite pour forcer une nouvelle requête fraîche
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
 
       if (error) throw error;
-      setProfile(data);
-    } catch (e) {
-      console.error('Impossible de récupérer le profil :', e);
+
+      // On force un nouvel objet pour que React comprenne que le profil a changé
+      setProfile({ ...data });
+    } catch (error) {
+      console.error('Erreur lors du chargement du profil :', error);
     }
   };
 
+  // 2. Gestion de la session utilisateur au démarrage
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) fetchProfile(currentUser.id);
-      setSessionLoading(false);
+      setSession(session);
+      if (session?.user) {
+        fetchProfile(session.user.id).then(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        fetchProfile(currentUser.id);
+      setSession(session);
+      if (session?.user) {
+        fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }
@@ -49,64 +56,73 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
+  // Simulation d'une connexion automatique si tu n'as pas encore fait de page de Login
+  // (À retirer quand tu mettras un vrai système de login !)
+  const handleFakeLogin = async () => {
+    alert("Assure-toi d'avoir un utilisateur dans ta base Supabase !");
   };
 
-  const handleBookAdded = () => {
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
-  const handleBookStatusChanged = (nextStatus: string) => {
-    if (nextStatus === 'Lu') {
-      console.warn('Un livre a été terminé ! Lancement potentiel du désordre...');
-    }
-  };
-
-  if (sessionLoading) {
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
     );
   }
 
-  if (!user) {
-    return <Auth />;
+  // Si pas connecté, tu peux afficher un bouton ou ton composant d'auth si tu en as un
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+        <h1 className="text-xl font-bold mb-4">Chaotic Library 📚🎲</h1>
+        <p className="text-sm text-slate-500 mb-4 text-center max-w-xs">
+          Connecte-toi à ton tableau de bord pour lancer tes dés du destin.
+        </p>
+        <button
+          onClick={handleFakeLogin}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold"
+        >
+          Se connecter
+        </button>
+      </div>
+    );
   }
 
-  const isAdmin = profile?.role === 'admin';
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-white p-4 md:p-6">
-      <header className="max-w-4xl mx-auto flex justify-between items-center mb-8">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">📚 Chaotic Library</h1>
-            {isAdmin && (
-              <span className="flex items-center gap-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
-                <ShieldCheck className="h-3 w-3" /> Admin
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
-        </div>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          Déconnexion
-        </button>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 md:p-8 space-y-10">
+      {/* HEADER DE LA PAGE (PROVISOIRE) */}
+      {/* HEADER DE LA PAGE (PROVISOIRE) */}
+      <header className="max-w-4xl mx-auto flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+        <h1 className="text-xl font-black tracking-tight flex items-center gap-2">
+          <BookOpen className="h-6 w-6 text-indigo-600" /> CHAOTIC LIBRARY
+        </h1>
+        <span className="text-xs font-semibold bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-600 dark:text-slate-300">
+          🧙‍♂️ {profile?.username || profile?.email || 'Lectrice Anonyme'}{' '}
+          {/* 👈 Choix intelligent ici ! */}
+        </span>
       </header>
 
-      <main className="max-w-4xl mx-auto space-y-6 pb-12">
-        <AddBookForm onBookAdded={handleBookAdded} />
-        <BookList refreshTrigger={refreshTrigger} onBookStatusChanged={handleBookStatusChanged} />
+      {/* 🎰 LE TABLEAU DE BORD DE JEU */}
+      {/* On lui passe le profil ET la fonction magique de rafraîchissement */}
+      <GameDashboard profile={profile} onXpChanged={() => fetchProfile(session.user.id)} />
 
-        {/* 🔒 Sécurité à l'affichage : Seul l'admin voit le panneau de gestion des défis */}
-        {isAdmin && <AdminChallengePool />}
-      </main>
+      <hr className="max-w-4xl mx-auto border-slate-200 dark:border-slate-800" />
+
+      {/* ZONE DES LIVRES */}
+      <div className="space-y-4">
+        <AddBookForm onBookAdded={() => setRefreshBooksTrigger((prev) => prev + 1)} />
+        <BookList
+          refreshTrigger={refreshBooksTrigger}
+          onBookStatusChanged={() => {
+            if (session?.user) fetchProfile(session.user.id);
+          }}
+        />
+      </div>
+
+      <hr className="max-w-4xl mx-auto border-slate-200 dark:border-slate-800" />
+
+      {/* ZONE ADMIN */}
+      <AdminChallengePool />
     </div>
   );
 }

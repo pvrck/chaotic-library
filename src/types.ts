@@ -1,5 +1,6 @@
 export type BookStatus = 'A lire' | 'En cours' | 'Lu' | 'Abandonné';
 export type BookFormat = 'Papier' | 'Numérique' | 'Audio' | 'Kindle';
+export type ChallengeStatus = 'en_cours' | 'reussi' | 'echoue';
 
 export interface Book {
   id: string;
@@ -39,7 +40,20 @@ export interface ChallengePoolItem {
 export interface Profile {
   id: string;
   email: string;
+  username: string | null;
   role: 'admin' | 'user';
   xp: number;
   updated_at: string;
+}
+
+export interface UserChallenge {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  status: ChallengeStatus;
+  activated_at: string;
+  expires_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  challenge_pool?: ChallengePoolItem;
 }
