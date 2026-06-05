@@ -102,8 +102,9 @@ export default function AddBookForm({ onBookAdded }: AddBookFormProps) {
 
       // Rafraîchir la liste des livres dans le parent
       onBookAdded();
-    } catch (error: any) {
-      alert(error.message || "Erreur lors de l'ajout");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout";
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { User } from '@supabase/supabase-js';
 import Auth from '@/components/Auth';
 import AddBookForm from '@/components/AddBookForm';
 import BookList from '@/components/BookList'; // <-- Ajoute cet import
@@ -7,7 +8,7 @@ import { LogOut, Loader2 } from 'lucide-react';
 
 export default function App() {
   const [sessionLoading, setSessionLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // <-- Le trigger magique
 
   useEffect(() => {

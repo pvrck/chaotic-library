@@ -26,8 +26,9 @@ export default function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Une erreur est survenue.' });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
+      setMessage({ type: 'error', text: errorMessage || 'Une erreur est survenue.' });
     } finally {
       setLoading(false);
     }

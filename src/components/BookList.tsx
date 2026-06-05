@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Book, BookStatus } from '@/types';
 import {
-  BookOpen,
   CheckCircle,
   Play,
-  Archive,
   Trash2,
   Loader2,
   Smartphone,
@@ -43,7 +41,9 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
 
   // Recharge les livres quand le composant monte OU quand le parent dit qu'un livre a été ajouté
   useEffect(() => {
-    fetchBooks();
+    (async () => {
+      await fetchBooks();
+    })();
   }, [refreshTrigger]);
 
   const updateStatus = async (id: string, currentStatus: BookStatus) => {
@@ -52,7 +52,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
     else if (currentStatus === 'En cours') nextStatus = 'Lu';
 
     try {
-      const updateData: any = { status: nextStatus };
+      const updateData: Partial<Book> = { status: nextStatus };
       if (nextStatus === 'Lu') {
         updateData.finished_at = new Date().toISOString();
       }
@@ -61,10 +61,9 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
       if (error) throw error;
 
       fetchBooks();
-
-      // On prévient le parent (pratique pour déclencher le Chaos plus tard !)
       onBookStatusChanged(nextStatus);
     } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
       alert('Impossible de mettre à jour le statut.');
     }
   };
@@ -75,7 +74,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
       const { error } = await supabase.from('books').delete().eq('id', id);
       if (error) throw error;
       fetchBooks();
-    } catch (error) {
+    } catch {
       alert('Erreur lors de la suppression.');
     }
   };
