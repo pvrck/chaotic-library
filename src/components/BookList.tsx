@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Book, BookStatus, BookFormat } from '@/types';
-import { Search, ChevronLeft, ChevronRight, Loader2, Edit3, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Loader2, Edit3, X, Sparkles } from 'lucide-react';
 
 interface BookListProps {
   refreshTrigger: number;
@@ -13,6 +13,7 @@ type SortOption = 'added_desc' | 'added_asc' | 'title_asc' | 'author_asc' | 'sag
 export default function BookList({ refreshTrigger, onBookStatusChanged }: BookListProps) {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chaosEvent, setChaosEvent] = useState<string | null>(null);
 
   // Filtres, recherche, tris & pagination
   const [search, setSearch] = useState('');
@@ -43,13 +44,75 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
     (async () => await fetchBooks())();
   }, [refreshTrigger]);
 
+  // Déclencheur de défi chaotique
+  const triggerChaosChallenge = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userChallenges, error } = await supabase
+        .from('user_challenges')
+        .select('id, status, challenge_pool(*)')
+        .eq('user_id', user.id)
+        .ne('status', 'en_cours');
+
+      if (error) throw error;
+
+      if (userChallenges && userChallenges.length > 0) {
+        // eslint-disable-next-line react-hooks/purity
+        const randomIndex = Math.floor(Math.random() * userChallenges.length);
+        const randomSelection = userChallenges[randomIndex];
+
+        // On type proprement l'objet plutôt que d'utiliser 'any'
+        const randomChallenge = randomSelection.challenge_pool as {
+          title: string;
+          xp_bonus?: number;
+          xp_malus?: number;
+        } | null;
+
+        if (randomChallenge) {
+          const { error: updateError } = await supabase
+            .from('user_challenges')
+            .update({ status: 'en_cours' })
+            .eq('id', randomSelection.id);
+
+          if (updateError) throw updateError;
+
+          const bonus = randomChallenge.xp_bonus || 0;
+          const malus = randomChallenge.xp_malus || 0;
+
+          let txtXP = '';
+          if (bonus > 0) txtXP = `+${bonus} XP`;
+          if (malus > 0) txtXP = `-${malus} XP (Malus ! 💀)`;
+          if (bonus > 0 && malus > 0) txtXP = `+${bonus} XP / -${malus} XP`;
+
+          setChaosEvent(
+            `🔮 LE CHAOS A PARLÉ ! Nouveau défi débloqué : "${randomChallenge.title}" (${txtXP})`
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Erreur Défi Chaos:', err);
+      alert('Le défi a été tiré mais impossible de mettre à jour ton statut en base.');
+    }
+  };
+
   const updateStatus = async (id: string, nextStatus: BookStatus) => {
     try {
+      setChaosEvent(null); // Reset l'ancien popup à chaque action
       const updateData: Partial<Book> = { status: nextStatus };
       if (nextStatus === 'Lu') updateData.finished_at = new Date().toISOString();
 
       const { error } = await supabase.from('books').update(updateData).eq('id', id);
       if (error) throw error;
+
+      // 🎲 JET DE DÉS DU CHAOS : 33% si le statut devient "Lu"
+      // eslint-disable-next-line react-hooks/purity
+      if (nextStatus === 'Lu' && Math.random() < 0.33) {
+        await triggerChaosChallenge();
+      }
 
       // Logique XP
       let xp =
@@ -57,7 +120,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
           ? 5
           : nextStatus === 'Lu'
             ? 120
-            : nextStatus === 'abandonne'
+            : nextStatus === 'Abandonné'
               ? 10
               : 0;
       const targetBook = books.find((b) => b.id === id);
@@ -83,7 +146,6 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Erreur lors du changement de statut.';
-
       console.error('Détail complet :', error);
       alert(errorMessage);
     }
@@ -156,6 +218,14 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
 
   return (
     <div className="w-full space-y-4 relative">
+      {/* 🔮 BANNIÈRE SURPRISE DU CHAOS */}
+      {chaosEvent && (
+        <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50 rounded-2xl animate-bounce flex items-center gap-3 text-xs font-bold text-purple-700 dark:text-purple-400">
+          <Sparkles className="h-5 w-5 shrink-0 text-purple-500 animate-pulse" />
+          <span>{chaosEvent}</span>
+        </div>
+      )}
+
       {/* 🔍 BARRE DE RECHERCHE ET FILTRES */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-xs">
         <div className="sm:col-span-2 relative">
@@ -209,7 +279,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
 
       {/* 📑 SOUS-ONGLETS DE STATUT */}
       <div className="flex gap-1 overflow-x-auto pb-1">
-        {(['Tous', 'A lire', 'En cours', 'Lu', 'abandonne'] as const).map((st) => (
+        {(['Tous', 'A lire', 'En cours', 'Lu', 'Abandonné'] as const).map((st) => (
           <button
             key={st}
             onClick={() => setStatusFilter(st)}
@@ -219,7 +289,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
                 : 'bg-white dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border border-slate-100 dark:border-slate-700/40'
             }`}
           >
-            {st === 'abandonne' ? 'Abandonnés' : st}
+            {st === 'Abandonné' ? 'Abandonnés' : st}
           </button>
         ))}
       </div>
@@ -239,7 +309,6 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {/* BADGE PASSIF : Reste plat et discret */}
                     <span className="text-[10px] bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded-md text-slate-500 font-medium select-none">
                       {book.format}
                     </span>
@@ -265,11 +334,11 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
                   )}
                 </div>
 
-                {/* BOUTONS D'ACTION : Deviennent de vrais boutons cliquables avec du relief */}
+                {/* BOUTONS D'ACTION CORRIGÉS */}
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                   {book.status === 'A lire' && (
                     <button
-                      onClick={() => updateStatus(book.id, book.status, 'En cours')}
+                      onClick={() => updateStatus(book.id, 'En cours')}
                       className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                       ⚔️ Commencer{' '}
@@ -279,14 +348,14 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
                   {book.status === 'En cours' && (
                     <>
                       <button
-                        onClick={() => updateStatus(book.id, book.status, 'Lu')}
+                        onClick={() => updateStatus(book.id, 'Lu')}
                         className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                       >
                         🏆 Terminer{' '}
                         <span className="text-[10px] opacity-90 font-normal">(+120 XP)</span>
                       </button>
                       <button
-                        onClick={() => updateStatus(book.id, book.status, 'abandonne')}
+                        onClick={() => updateStatus(book.id, 'Abandonné')}
                         className="cursor-pointer bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 font-medium px-3 py-1.5 rounded-xl border border-slate-200 hover:border-rose-200 transition-all"
                       >
                         Abandonner
@@ -298,7 +367,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
                       🎉 Terminé
                     </span>
                   )}
-                  {book.status === 'abandonne' && (
+                  {book.status === 'Abandonné' && (
                     <span className="text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 font-medium px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
                       🛑 Abandonné
                     </span>
@@ -439,7 +508,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
                     <option value="A lire">À lire</option>
                     <option value="En cours">En cours</option>
                     <option value="Lu">Lu</option>
-                    <option value="abandonne">Abandonné</option>
+                    <option value="Abandonné">Abandonné</option>
                   </select>
                 </div>
               </div>
