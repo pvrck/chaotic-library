@@ -23,3 +23,23 @@ export interface Challenge {
   is_completed: boolean;
   triggered_at: string;
 }
+
+export interface ChallengePoolItem {
+  id: string;
+  title: string;
+  description: string | null;
+  type: 'mensuel' | 'chaos';
+  duration_days: number;
+  xp_bonus: number;
+  xp_malus: number;
+  created_at: string;
+  created_by?: string | null;
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  role: 'admin' | 'user';
+  xp: number;
+  updated_at: string;
+}
