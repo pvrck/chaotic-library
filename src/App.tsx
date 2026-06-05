@@ -161,11 +161,22 @@ export default function App() {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setActiveTab('profile')}
-              className="cursor-pointer text-[11px] font-bold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 max-w-[140px] truncate hidden lg:flex items-center gap-1.5"
+              className={`cursor-pointer text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                activeTab === 'profile'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+              title="Mon Profil"
             >
-              <span>{profile?.avatar_url || '📖'}</span>
-              <span className="truncate">{profile?.username || profile?.email || 'Lectrice'}</span>
+              {/* L'émoji ou l'avatar est toujours visible */}
+              <span className="text-sm select-none">{profile?.avatar_url || '📖'}</span>
+
+              {/* Le texte du pseudo se cache sur mobile et s'affiche à partir de 'sm' (tablette/desktop) */}
+              <span className="truncate max-w-[90px] md:max-w-[140px] hidden sm:inline">
+                {profile?.username || profile?.email?.split('@')[0] || 'Lectrice'}
+              </span>
             </button>
+
             <button
               onClick={handleLogout}
               className="p-2 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
