@@ -15,16 +15,6 @@ export interface Book {
   saga_volume?: number | null;
 }
 
-export interface Challenge {
-  id: string;
-  user_id: string;
-  title: string;
-  description?: string | null;
-  type: 'mensuel' | 'chaos';
-  is_completed: boolean;
-  triggered_at: string;
-}
-
 export interface ChallengePoolItem {
   id: string;
   title: string;
