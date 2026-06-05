@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import BookForm from '@/components/BookForm';
 import Auth from '@/components/Auth';
+import ProfileSettings from './components/ProfileSettings';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -23,9 +24,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   // Navigation par onglets étendue et plus précise
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'pal' | 'add-book' | 'admin'>(
-    'dashboard'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'dashboard' | 'pal' | 'add-book' | 'profile' | 'admin'
+  >('dashboard');
 
   // Déclencheur pour synchroniser l'ajout de livres et la liste
   const [refreshBooksTrigger, setRefreshBooksTrigger] = useState(0);
@@ -110,7 +111,7 @@ export default function App() {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                 activeTab === 'dashboard'
                   ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  : 'cursor-pointer text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
@@ -122,7 +123,7 @@ export default function App() {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                 activeTab === 'pal'
                   ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  : 'cursor-pointer text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               <Library className="h-3.5 w-3.5 shrink-0" />
@@ -134,7 +135,7 @@ export default function App() {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                 activeTab === 'add-book'
                   ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  : 'cursor-pointer text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               <PlusCircle className="h-3.5 w-3.5 shrink-0" />
@@ -147,7 +148,7 @@ export default function App() {
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                   activeTab === 'admin'
                     ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    : ' cursor-pointer text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
@@ -158,9 +159,13 @@ export default function App() {
 
           {/* Profil */}
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 max-w-[100px] truncate hidden lg:block">
-              🧙‍♂️ {profile?.username || profile?.email || 'Lectrice'}
-            </span>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className="cursor-pointer text-[11px] font-bold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 max-w-[140px] truncate hidden lg:flex items-center gap-1.5"
+            >
+              <span>{profile?.avatar_url || '📖'}</span>
+              <span className="truncate">{profile?.username || profile?.email || 'Lectrice'}</span>
+            </button>
             <button
               onClick={handleLogout}
               className="p-2 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
@@ -200,6 +205,17 @@ export default function App() {
               onBookAdded={() => {
                 setRefreshBooksTrigger((prev) => prev + 1);
                 setActiveTab('pal'); // Redirection auto vers la PAL après ajout, plus fluide !
+              }}
+            />
+          </div>
+        )}
+
+        {activeTab === 'profile' && (
+          <div className="animate-in fade-in duration-200">
+            <ProfileSettings
+              profile={profile}
+              onProfileUpdate={() => {
+                if (session?.user) fetchProfile(session.user.id);
               }}
             />
           </div>

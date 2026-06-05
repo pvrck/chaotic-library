@@ -44,6 +44,7 @@ export interface Profile {
   role: 'admin' | 'user';
   xp: number;
   updated_at: string;
+  avatar_url: string | null;
 }
 
 export interface UserChallenge {
