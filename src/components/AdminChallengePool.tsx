@@ -13,9 +13,55 @@ import {
   Edit2,
   Check,
   X,
+  Plus,
+  Sparkles,
 } from 'lucide-react';
 
-type AdminTab = 'challenges' | 'users';
+// --- NOTRE TYPE POUR LES NIVEAUX ---
+interface LevelConfig {
+  id: number;
+  xp_min: number;
+  title: string;
+}
+
+// --- LA MÉTHODE DE CALCUL DES NIVEAUX ---
+function getPlayerLevelInfo(xp: number, levels: LevelConfig[]) {
+  if (!levels || levels.length === 0) {
+    return { title: 'Curieuse', nextLevelXp: null, progressPercentage: 0 };
+  }
+
+  // On trie les niveaux par XP croissants
+  const sortedLevels = [...levels].sort((a, b) => a.xp_min - b.xp_min);
+
+  let currentTitle = sortedLevels[0]?.title || 'Curieuse';
+  let nextLevelXp: number | null = null;
+  let currentLevelMinXp = 0;
+
+  for (let i = 0; i < sortedLevels.length; i++) {
+    if (xp >= sortedLevels[i].xp_min) {
+      currentTitle = sortedLevels[i].title;
+      currentLevelMinXp = sortedLevels[i].xp_min;
+      nextLevelXp = sortedLevels[i + 1] ? sortedLevels[i + 1].xp_min : null;
+    } else {
+      break;
+    }
+  }
+
+  let progressPercentage = 100;
+  if (nextLevelXp !== null) {
+    const range = nextLevelXp - currentLevelMinXp;
+    const gainedInCurrentRange = xp - currentLevelMinXp;
+    progressPercentage = range > 0 ? (gainedInCurrentRange / range) * 100 : 100;
+  }
+
+  return {
+    title: currentTitle,
+    nextLevelXp,
+    progressPercentage: Math.min(100, Math.max(0, Math.round(progressPercentage))),
+  };
+}
+
+type AdminTab = 'challenges' | 'users' | 'levels';
 
 interface AdminChallengePoolProps {
   currentProfile: Profile | null;
@@ -51,6 +97,14 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
   const [users, setUsers] = useState<Profile[]>([]);
   const [searchUser, setSearchUser] = useState('');
 
+  // --- ÉTATS NIVEAUX (ADMINISTRABLES) ---
+  const [levels, setLevels] = useState<LevelConfig[]>([]);
+  const [newLevelXp, setNewLevelXp] = useState<number>(0);
+  const [newLevelTitle, setNewLevelTitle] = useState<string>('');
+  const [editingLevelId, setEditingLevelId] = useState<number | null>(null);
+  const [editLevelXp, setEditLevelXp] = useState<number>(0);
+  const [editLevelTitle, setEditLevelTitle] = useState<string>('');
+
   // Petit déclencheur pour rafraîchir les données sans fâcher le linter
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -64,11 +118,18 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
           .from('challenge_pool')
           .select('*')
           .order('created_at', { ascending: false });
+
         const { data: userData } = await supabase.from('profiles').select('*');
+
+        const { data: levelData } = await supabase
+          .from('levels_config')
+          .select('*')
+          .order('xp_min', { ascending: true });
 
         if (isMounted) {
           setChallenges(chalData || []);
           setUsers(userData || []);
+          setLevels(levelData || []);
           setLoading(false);
         }
       } catch (err) {
@@ -109,7 +170,7 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
     }
   };
 
-  // 🔥 ACTION : Activer le mode édition sur une ligne
+  // 🔥 ACTION : Activer le mode édition sur une ligne défi
   const startEditing = (challenge: ChallengePoolItem) => {
     setEditingId(challenge.id);
     setEditTitle(challenge.title);
@@ -121,7 +182,6 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
 
   // 🔥 ACTION : Sauvegarder les modifications d'un défi
   const handleUpdateChallenge = async (id: string) => {
-    // On récupère le défi original pour connaître son type (chaos ou mensuel)
     const originalChallenge = challenges.find((c) => c.id === id);
     if (!originalChallenge) return;
 
@@ -133,7 +193,6 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
           description: editDesc,
           xp_bonus: editXpBonus,
           xp_malus: editXpMalus,
-          // Si c'est un défi mensuel, on garde NULL ou 30 selon ta structure, sinon la valeur éditée
           duration_days: originalChallenge.type === 'mensuel' ? null : editDuration,
         })
         .eq('id', id);
@@ -144,7 +203,6 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
       setRefreshTrigger((prev) => prev + 1);
     } catch (err) {
       console.error('Erreur update complète:', err);
-      // Extraction sécurisée des propriétés de l'erreur pour satisfaire TypeScript
       const errorWithInterface = err as { message?: string; details?: string };
       alert(
         `Erreur lors de la modification : ${errorWithInterface.message || errorWithInterface.details || 'Erreur inconnue'}`
@@ -163,6 +221,59 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
       } catch (err) {
         console.error(err);
         alert('Erreur lors de la suppression.');
+      }
+    }
+  };
+
+  // --- ACTIONS DES NIVEAUX ---
+  const handleAddLevel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase
+        .from('levels_config')
+        .insert([{ xp_min: newLevelXp, title: newLevelTitle }]);
+
+      if (error) throw error;
+      setNewLevelXp(0);
+      setNewLevelTitle('');
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la création du palier. L'XP minimum doit être unique.");
+    }
+  };
+
+  const startEditingLevel = (lvl: LevelConfig) => {
+    setEditingLevelId(lvl.id);
+    setEditLevelXp(lvl.xp_min);
+    setEditLevelTitle(lvl.title);
+  };
+
+  const handleUpdateLevel = async (id: number) => {
+    try {
+      const { error } = await supabase
+        .from('levels_config')
+        .update({ xp_min: editLevelXp, title: editLevelTitle })
+        .eq('id', id);
+
+      if (error) throw error;
+      setEditingLevelId(null);
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (err) {
+      console.error(err);
+      alert('Erreur lors de la mise à jour du palier.');
+    }
+  };
+
+  const handleDeleteLevel = async (id: number, title: string) => {
+    if (confirm(`Supprimer le rang "${title}" ?`)) {
+      try {
+        const { error } = await supabase.from('levels_config').delete().eq('id', id);
+        if (error) throw error;
+        setRefreshTrigger((prev) => prev + 1);
+      } catch (err) {
+        console.error(err);
+        alert('Erreur lors de la suppression du palier.');
       }
     }
   };
@@ -245,7 +356,7 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
           </p>
         </div>
 
-        <div className="flex gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl w-full sm:w-auto">
+        <div className="flex gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl w-full sm:w-auto overflow-x-auto">
           <button
             onClick={() => setActiveAdminTab('challenges')}
             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -267,6 +378,17 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
           >
             <Users className="h-3.5 w-3.5" />
             <span>Joueurs ({users.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('levels')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeAdminTab === 'levels'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-white shadow-xs'
+                : 'text-slate-500'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Rangs ({levels.length})</span>
           </button>
         </div>
       </div>
@@ -486,7 +608,8 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
                             ⏱️ {c.type === 'mensuel' ? 'Tout le mois' : `${c.duration_days} jours`}{' '}
                             •{' '}
                             <span className="text-emerald-600 font-semibold">+{c.xp_bonus} XP</span>{' '}
-                            • <span className="text-rose-500 font-semibold">-{c.xp_malus} XP</span>
+                            Presque •{' '}
+                            <span className="text-rose-500 font-semibold">-{c.xp_malus} XP</span>
                           </p>
                         </div>
 
@@ -536,67 +659,217 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
                 Aucune lectrice ne correspond à ce nom.
               </div>
             ) : (
-              filteredUsers.map((u) => (
-                <div
-                  key={u.id}
-                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-indigo-600 text-sm">
-                      {(u.username || 'L')[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <h4 className="font-bold text-slate-800 dark:text-white">
-                          {u.username || 'Lectrice Sans Nom'}
-                        </h4>
-                        {u.role === 'admin' && (
-                          <span className="text-[9px] bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 px-1.5 py-0.2 rounded-md font-black uppercase tracking-wider">
-                            GM Admin
-                          </span>
-                        )}
+              filteredUsers.map((u) => {
+                const { title, nextLevelXp, progressPercentage } = getPlayerLevelInfo(
+                  u.xp || 0,
+                  levels
+                );
+                return (
+                  <div
+                    key={u.id}
+                    className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-indigo-600 text-sm">
+                        {(u.username || 'L')[0].toUpperCase()}
                       </div>
-                      <p className="text-[11px] text-slate-400">
-                        {u.email || 'Pas de mail rattaché'}
-                      </p>
-                      <p className="text-[10px] text-indigo-500 font-bold mt-0.5">
-                        ⭐ Niveau {Math.floor((u.xp || 0) / 1000) + 1} ({u.xp || 0} XP)
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-bold text-slate-800 dark:text-white">
+                            {u.username || 'Lectrice Sans Nom'}
+                          </h4>
+                          {u.role === 'admin' && (
+                            <span className="text-[9px] bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 px-1.5 py-0.2 rounded-md font-black uppercase tracking-wider">
+                              GM Admin
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          {u.email || 'Pas de mail rattaché'}
+                        </p>
+                        <div className="mt-1 space-y-1">
+                          <p className="text-[10px] text-indigo-500 font-bold flex items-center gap-1.5">
+                            ✨ {title}{' '}
+                            <span className="text-slate-400 font-medium">({u.xp || 0} XP)</span>
+                          </p>
+                          {nextLevelXp && (
+                            <div className="w-32 h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-indigo-500 transition-all duration-300"
+                                style={{ width: `${progressPercentage}%` }}
+                              ></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 self-end sm:self-center flex-wrap">
+                      <button
+                        onClick={() => handleModerateProfile(u.id)}
+                        className="cursor-pointer flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-700 px-2.5 py-1.5 rounded-xl border border-amber-200 transition-all font-medium"
+                        title="Nettoyer le profil"
+                      >
+                        <Ban className="h-3 w-3" /> Modérer
+                      </button>
+
+                      <button
+                        onClick={() => handleResetPassword(u.email)}
+                        className="cursor-pointer flex items-center gap-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-900/60 text-slate-600 dark:text-slate-300 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-all font-medium"
+                        title="Forcer reset pass"
+                      >
+                        <Key className="h-3 w-3" /> Clé/Pass
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleAdmin(u.id, u.role || 'user')}
+                        className={`cursor-pointer flex items-center gap-1 px-2.5 py-1.5 rounded-xl font-bold transition-all ${
+                          u.role === 'admin'
+                            ? 'bg-rose-600 text-white hover:bg-rose-700'
+                            : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                        }`}
+                      >
+                        <UserCheck className="h-3 w-3" />{' '}
+                        {u.role === 'admin' ? 'Destituer' : 'Promouvoir'}
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1.5 self-end sm:self-center flex-wrap">
-                    <button
-                      onClick={() => handleModerateProfile(u.id)}
-                      className="cursor-pointer flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-700 px-2.5 py-1.5 rounded-xl border border-amber-200 transition-all font-medium"
-                      title="Nettoyer le profil"
-                    >
-                      <Ban className="h-3 w-3" /> Modérer
-                    </button>
-
-                    <button
-                      onClick={() => handleResetPassword(u.email)}
-                      className="cursor-pointer flex items-center gap-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-900/60 text-slate-600 dark:text-slate-300 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-all font-medium"
-                      title="Forcer reset pass"
-                    >
-                      <Key className="h-3 w-3" /> Clé/Pass
-                    </button>
-
-                    <button
-                      onClick={() => handleToggleAdmin(u.id, u.role || 'user')}
-                      className={`cursor-pointer flex items-center gap-1 px-2.5 py-1.5 rounded-xl font-bold transition-all ${
-                        u.role === 'admin'
-                          ? 'bg-rose-600 text-white hover:bg-rose-700'
-                          : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                      }`}
-                    >
-                      <UserCheck className="h-3 w-3" />{' '}
-                      {u.role === 'admin' ? 'Destituer' : 'Promouvoir'}
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 📜 SECTION 3 : GESTION DES NIVEAUX / RANGS */}
+      {activeAdminTab === 'levels' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* Formulaire de création de Palier */}
+          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/50 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Forger un nouveau Rang
+            </h3>
+            <form onSubmit={handleAddLevel} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  XP Minimum requis
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  value={newLevelXp}
+                  onChange={(e) => setNewLevelXp(parseInt(e.target.value) || 0)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none focus:ring-2 focus:ring-indigo-500 font-mono font-bold"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Nom du Titre Mystique
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newLevelTitle}
+                  onChange={(e) => setNewLevelTitle(e.target.value)}
+                  placeholder="Ex: Bibliomancienne"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-1.5 cursor-pointer bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold py-2 rounded-xl mt-2 transition-all"
+              >
+                <Plus className="h-3.5 w-3.5" /> Graver le Rang
+              </button>
+            </form>
+          </div>
+
+          {/* Tableau d'édition en direct des Rangs */}
+          <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-700 text-slate-400 uppercase tracking-wider text-[10px]">
+                    <th className="py-3 px-4 font-bold">XP Minimum</th>
+                    <th className="py-3 px-4 font-bold">Titre de l'Univers</th>
+                    <th className="py-3 px-4 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/40">
+                  {levels.map((lvl) => (
+                    <tr
+                      key={lvl.id}
+                      className="hover:bg-slate-50/50 dark:hover:bg-slate-700/10 transition-colors"
+                    >
+                      {editingLevelId === lvl.id ? (
+                        <>
+                          <td className="py-2 px-4">
+                            <input
+                              type="number"
+                              value={editLevelXp}
+                              onChange={(e) => setEditLevelXp(parseInt(e.target.value) || 0)}
+                              className="w-24 px-2 py-1 bg-slate-50 dark:bg-slate-900 rounded-lg font-mono font-bold text-indigo-600"
+                            />
+                          </td>
+                          <td className="py-2 px-4">
+                            <input
+                              type="text"
+                              value={editLevelTitle}
+                              onChange={(e) => setEditLevelTitle(e.target.value)}
+                              className="w-full max-w-xs px-2 py-1 bg-slate-50 dark:bg-slate-900 rounded-lg font-semibold"
+                            />
+                          </td>
+                          <td className="py-2 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => handleUpdateLevel(lvl.id)}
+                                className="p-1 bg-emerald-600 text-white rounded-md cursor-pointer"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setEditingLevelId(null)}
+                                className="p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md cursor-pointer"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-3 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                            {lvl.xp_min} XP
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-slate-800 dark:text-white">
+                            ✨ {lvl.title}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1 opacity-60 hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => startEditingLevel(lvl)}
+                                className="p-1 text-slate-400 hover:text-indigo-600 rounded-md cursor-pointer"
+                                title="Modifier"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteLevel(lvl.id, lvl.title)}
+                                className="p-1 text-slate-400 hover:text-rose-600 rounded-md cursor-pointer"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

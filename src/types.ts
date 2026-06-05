@@ -48,3 +48,9 @@ export interface UserChallenge {
   created_at: string;
   challenge_pool?: ChallengePoolItem;
 }
+
+export interface LevelConfig {
+  id: number;
+  xp_min: number;
+  title: string;
+}
