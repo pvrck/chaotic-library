@@ -3,11 +3,11 @@ import { supabase } from '@/lib/supabaseClient';
 import { BookOpen, Search, Loader2, Plus, Sparkles } from 'lucide-react';
 import { BookFormat, BookStatus } from '@/types';
 
-interface AddBookFormProps {
+interface BookFormProps {
   onBookAdded: () => void;
 }
 
-export default function AddBookForm({ onBookAdded }: AddBookFormProps) {
+export default function BookForm({ onBookAdded }: BookFormProps) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
 
