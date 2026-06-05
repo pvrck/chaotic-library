@@ -13,6 +13,9 @@ export interface Book {
   finished_at?: string | null;
   saga_name?: string | null;
   saga_volume?: number | null;
+  is_lc: boolean;
+  isbn?: string | null;
+  thumbnail?: string | null;
 }
 
 export interface ChallengePoolItem {

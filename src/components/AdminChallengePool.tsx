@@ -608,8 +608,7 @@ export default function AdminChallengePool({ currentProfile }: AdminChallengePoo
                             ⏱️ {c.type === 'mensuel' ? 'Tout le mois' : `${c.duration_days} jours`}{' '}
                             •{' '}
                             <span className="text-emerald-600 font-semibold">+{c.xp_bonus} XP</span>{' '}
-                            Presque •{' '}
-                            <span className="text-rose-500 font-semibold">-{c.xp_malus} XP</span>
+                            • <span className="text-rose-500 font-semibold">-{c.xp_malus} XP</span>
                           </p>
                         </div>
 

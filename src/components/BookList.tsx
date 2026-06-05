@@ -1,11 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Book, BookStatus, BookFormat } from '@/types';
-import { Search, ChevronLeft, ChevronRight, Loader2, Edit3, X, Sparkles } from 'lucide-react';
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Edit3,
+  X,
+  Sparkles,
+  BookOpen,
+} from 'lucide-react';
+import { formatDate } from '@/utils/date';
 
 interface BookListProps {
   refreshTrigger: number;
   onBookStatusChanged: (status: BookStatus) => void;
+}
+
+interface BookDetails {
+  description: string | null;
+  pageCount: number | undefined;
+  publishedDate: string | undefined;
+  categories: string[] | undefined;
+  image: string | undefined;
 }
 
 type SortOption = 'added_desc' | 'added_asc' | 'title_asc' | 'author_asc' | 'saga_asc';
@@ -15,13 +33,17 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
   const [loading, setLoading] = useState(true);
   const [chaosEvent, setChaosEvent] = useState<string | null>(null);
 
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [bookDetails, setBookDetails] = useState<BookDetails>();
+
   // Filtres, recherche, tris & pagination
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<BookStatus | 'Tous'>('Tous');
   const [formatFilter, setFormatFilter] = useState<BookFormat | 'Tous'>('Tous');
   const [sortBy, setSortBy] = useState<SortOption>('added_desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
 
   // Gestion de l'édition
   const [editingBook, setEditingBook] = useState<Book | null>(null);
@@ -61,7 +83,6 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
       if (error) throw error;
 
       if (userChallenges && userChallenges.length > 0) {
-        // eslint-disable-next-line react-hooks/purity
         const randomIndex = Math.floor(Math.random() * userChallenges.length);
         const randomSelection = userChallenges[randomIndex];
 
@@ -113,7 +134,7 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
       if (error) throw error;
 
       // 🎲 JET DE DÉS DU CHAOS : 33% si le statut devient "Lu"
-      // eslint-disable-next-line react-hooks/purity
+
       if (nextStatus === 'Lu' && Math.random() < 0.33) {
         await triggerChaosChallenge();
       }
@@ -170,6 +191,8 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
           saga_volume: editingBook.saga_volume || null,
           format: editingBook.format,
           status: editingBook.status,
+          is_lc: editingBook.is_lc || false,
+          added_at: editingBook.added_at || new Date().toISOString(),
         })
         .eq('id', editingBook.id);
 
@@ -185,6 +208,48 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
     }
   };
 
+  const handleOpenDetails = async (book: Book) => {
+    setSelectedBook(book);
+    setDetailsLoading(true);
+    setBookDetails(null);
+
+    try {
+      const apiKey = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
+
+      if (!apiKey) {
+        alert('La clé VITE_GOOGLE_BOOKS_API_KEY est manquante dans votre fichier .env');
+        setFetching(false);
+        return;
+      }
+
+      // 🔍 Recherche Google Books par titre + auteur
+      const query = encodeURIComponent(`${book.title} ${book.author}`);
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1&key=${apiKey}`
+      );
+
+      const data = await response.json();
+
+      if (data.items && data.items.length > 0) {
+        const volume = data.items[0].volumeInfo;
+
+        const details = {
+          description: volume.description || null,
+          pageCount: volume.pageCount,
+          publishedDate: volume.publishedDate,
+          categories: volume.categories,
+          image: volume.imageLinks?.thumbnail,
+        };
+
+        setBookDetails(details);
+      }
+    } catch (err) {
+      console.error('Erreur Google Books:', err);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
   // --- TRAITEMENT DES DONNÉES (FILTRE & TRI) ---
   const filteredAndSortedBooks = books
     .filter((book) => {
@@ -194,7 +259,9 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
         (book.saga_name && book.saga_name.toLowerCase().includes(search.toLowerCase()));
       const matchesStatus = statusFilter === 'Tous' || book.status === statusFilter;
       const matchesFormat = formatFilter === 'Tous' || book.format === formatFilter;
-      return matchesSearch && matchesStatus && matchesFormat;
+      const matchesSagaSort =
+        sortBy !== 'saga_asc' || (book.saga_name !== null && book.saga_name?.trim() !== '');
+      return matchesSearch && matchesStatus && matchesFormat && matchesSagaSort;
     })
     .sort((a, b) => {
       if (sortBy === 'added_desc')
@@ -306,79 +373,118 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-700/40">
-            {currentItems.map((book) => (
-              <div
-                key={book.id}
-                className="p-4 flex flex-col sm:flex-row sm:items-start md:items-center justify-between gap-3 text-xs"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded-md text-slate-500 font-medium select-none">
-                      {book.format}
-                    </span>
-                    <h4 className="font-bold text-slate-800 dark:text-white">{book.title}</h4>
-                    <button
-                      onClick={() => setEditingBook(book)}
-                      className="p-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
-                      title="Modifier les détails"
-                    >
-                      <Edit3 className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <p className="text-slate-400 mt-0.5">
-                    par{' '}
-                    <span className="font-medium text-slate-600 dark:text-slate-300">
-                      {book.author}
-                    </span>
-                  </p>
-                  {book.saga_name && (
-                    <p className="text-[11px] text-indigo-500 font-medium mt-0.5">
-                      🧬 Saga : {book.saga_name} (Vol. {book.saga_volume || '?'})
-                    </p>
-                  )}
-                </div>
+            {currentItems.map((book) => {
+              return (
+                <div
+                  key={book.id}
+                  className="p-4 flex flex-col sm:flex-row sm:items-start md:items-center justify-between gap-4 text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
+                >
+                  {/* Conteneur Image + Infos cliquable pour voir le détail */}
+                  <div
+                    className="flex-1 flex gap-4 items-center cursor-pointer group"
+                    onClick={() => handleOpenDetails(book)}
+                  >
+                    {/* Couverture du livre */}
+                    <div className="h-16 w-12 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200/60 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0 shadow-xs group-hover:shadow-md transition-shadow relative">
+                      {book?.thumbnail ? (
+                        <img
+                          src={book?.thumbnail}
+                          alt={book.title}
+                          className="h-full w-full object-cover rounded-xl"
+                        />
+                      ) : (
+                        <BookOpen className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                      )}
+                    </div>
 
-                {/* BOUTONS D'ACTION CORRIGÉS */}
-                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  {book.status === 'A lire' && (
-                    <button
-                      onClick={() => updateStatus(book.id, 'En cours')}
-                      className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
-                    >
-                      ⚔️ Commencer{' '}
-                      <span className="text-[10px] opacity-90 font-normal">(+5 XP)</span>
-                    </button>
-                  )}
-                  {book.status === 'En cours' && (
-                    <>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded-md text-slate-500 font-medium select-none">
+                          {book.format}
+                        </span>
+                        {book.is_lc && (
+                          <span className="text-[10px] bg-purple-100 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/50 px-1.5 py-0.5 rounded-md text-purple-600 dark:text-purple-400 font-bold select-none">
+                            👥 LC
+                          </span>
+                        )}
+                        <h4 className="font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 transition-colors">
+                          {book.title}
+                        </h4>
+
+                        {/* Bouton d'édition isolé du clic global grâce à e.stopPropagation() */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Évite d'ouvrir les détails
+                            setEditingBook(book);
+                          }}
+                          className="p-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                          title="Modifier les détails"
+                        >
+                          <Edit3 className="h-3 w-3" />
+                        </button>
+                      </div>
+
+                      <p className="text-slate-400 mt-0.5">
+                        par{' '}
+                        <span className="font-medium text-slate-600 dark:text-slate-300">
+                          {book.author}
+                        </span>
+                      </p>
+                      {book.saga_name && (
+                        <p className="text-[11px] text-indigo-500 font-medium mt-0.5">
+                          🧬 Saga : {book.saga_name} (Vol. {book.saga_volume || '?'})
+                        </p>
+                      )}
+                      {book.added_at && (
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 italic">
+                          Ajouté le {formatDate(book.added_at)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* BOUTONS D'ACTION */}
+                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    {book.status === 'A lire' && (
                       <button
-                        onClick={() => updateStatus(book.id, 'Lu')}
-                        className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+                        onClick={() => updateStatus(book.id, 'En cours')}
+                        className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                       >
-                        🏆 Terminer{' '}
-                        <span className="text-[10px] opacity-90 font-normal">(+120 XP)</span>
+                        ⚔️ Commencer{' '}
+                        <span className="text-[10px] opacity-90 font-normal">(+5 XP)</span>
                       </button>
-                      <button
-                        onClick={() => updateStatus(book.id, 'Abandonné')}
-                        className="cursor-pointer bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 font-medium px-3 py-1.5 rounded-xl border border-slate-200 hover:border-rose-200 transition-all"
-                      >
-                        Abandonner
-                      </button>
-                    </>
-                  )}
-                  {book.status === 'Lu' && (
-                    <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
-                      🎉 Terminé
-                    </span>
-                  )}
-                  {book.status === 'Abandonné' && (
-                    <span className="text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 font-medium px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
-                      🛑 Abandonné
-                    </span>
-                  )}
+                    )}
+                    {book.status === 'En cours' && (
+                      <>
+                        <button
+                          onClick={() => updateStatus(book.id, 'Lu')}
+                          className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+                        >
+                          🏆 Terminer{' '}
+                          <span className="text-[10px] opacity-90 font-normal">(+120 XP)</span>
+                        </button>
+                        <button
+                          onClick={() => updateStatus(book.id, 'Abandonné')}
+                          className="cursor-pointer bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 font-medium px-3 py-1.5 rounded-xl border border-slate-200 hover:border-rose-200 transition-all"
+                        >
+                          Abandonner
+                        </button>
+                      </>
+                    )}
+                    {book.status === 'Lu' && (
+                      <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
+                        🎉 Terminé
+                      </span>
+                    )}
+                    {book.status === 'Abandonné' && (
+                      <span className="text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 font-medium px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
+                        🛑 Abandonné
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -451,6 +557,24 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">
+                  Code ISBN (10 ou 13 chiffres)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: 9782266200264"
+                  value={editingBook.isbn || ''}
+                  onChange={(e) =>
+                    setEditingBook({
+                      ...editingBook,
+                      isbn: e.target.value.replace(/[^0-9X]/gi, ''),
+                    })
+                  } // Permet uniquement les chiffres et 'X'
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 p-3 rounded-xl text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white"
+                />
+              </div>
+
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2">
                   <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -517,6 +641,38 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                {/* Option Lecture Commune */}
+                <div className="flex items-center gap-2 py-2">
+                  <input
+                    type="checkbox"
+                    id="isLc"
+                    checked={editingBook.is_lc}
+                    onChange={(e) => setEditingBook({ ...editingBook, is_lc: e.target.checked })}
+                    className="h-4 w-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  />
+                  <label
+                    htmlFor="isLc"
+                    className="text-sm font-medium text-slate-600 dark:text-slate-400"
+                  >
+                    Lecture commune (LC)
+                  </label>
+                </div>
+
+                {/* Choix de la date */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    Date d'ajout
+                  </label>
+                  <input
+                    type="date"
+                    value={editingBook.added_at.split('T')[0]}
+                    onChange={(e) => setEditingBook({ ...editingBook, added_at: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
@@ -534,6 +690,95 @@ export default function BookList({ refreshTrigger, onBookStatusChanged }: BookLi
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 📖 MODALE DE DÉTAILS DU LIVRE */}
+      {selectedBook && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-slate-100 dark:border-slate-700 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/50 pb-3">
+              <h3 className="font-black uppercase tracking-wider text-slate-400 text-[10px]">
+                Fiche du livre
+              </h3>
+              <button
+                onClick={() => setSelectedBook(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex gap-4">
+                <div className="h-24 w-16 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-700 shrink-0 flex items-center justify-center">
+                  {selectedBook?.thumbnail ? (
+                    <img
+                      src={selectedBook?.thumbnail}
+                      alt={selectedBook.title}
+                      className="h-full w-full object-cover rounded-xl"
+                    />
+                  ) : (
+                    <BookOpen className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-800 dark:text-white">
+                    {selectedBook.title}
+                  </h2>
+                  <p className="text-slate-500 font-medium">par {selectedBook.author}</p>
+                  {selectedBook.saga_name && (
+                    <p className="text-indigo-500 font-semibold mt-1">
+                      🧬 Saga : {selectedBook.saga_name} (Vol. {selectedBook.saga_volume || '?'})
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Résumé / Description :
+                </h4>
+
+                {detailsLoading ? (
+                  <div className="flex items-center gap-2 text-slate-400 italic py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                    Invocation des archives de Google Books...
+                  </div>
+                ) : bookDetails?.description ? (
+                  <div className="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl max-h-48 overflow-y-auto leading-relaxed border border-slate-100 dark:border-slate-700/30">
+                    {bookDetails.description}
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 p-4 rounded-xl text-center space-y-3">
+                    <p className="text-amber-700 dark:text-amber-400 font-medium">
+                      Aucun résumé trouvé dans Google Books.
+                    </p>
+                    <a
+                      href={`https://www.google.com/search?q=${encodeURIComponent(
+                        selectedBook.title + ' ' + selectedBook.author + ' livre résumé'
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-xs"
+                    >
+                      🔍 Chercher le résumé sur Google
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-700/50">
+              <button
+                type="button"
+                onClick={() => setSelectedBook(null)}
+                className="w-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all cursor-pointer"
+              >
+                Fermer la fiche
+              </button>
+            </div>
           </div>
         </div>
       )}
