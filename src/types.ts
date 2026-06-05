@@ -57,3 +57,11 @@ export interface LevelConfig {
   xp_min: number;
   title: string;
 }
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  xp: number;
+  created_at: string;
+}
