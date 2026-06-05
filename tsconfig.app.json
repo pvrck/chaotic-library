@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.dotts/tsconfig.app.tsbuildinfo",
     "target": "ES2022",
