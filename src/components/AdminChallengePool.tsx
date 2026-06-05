@@ -1,406 +1,429 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { ChallengePoolItem } from '@/types';
-import {
-  Sparkles,
-  Calendar,
-  Plus,
-  Trash2,
-  Loader2,
-  ListPlus,
-  Clock,
-  Trophy,
-  Skull,
-  Pencil,
-  X,
-  Save,
-} from 'lucide-react';
+import { ChallengePoolItem, Profile } from '@/types';
+import { Shield, Dices, Users, Key, UserCheck, Loader2, Ban } from 'lucide-react';
 
-export default function AdminChallengePool() {
-  const [challenges, setChallenges] = useState<ChallengePoolItem[]>([]);
+type AdminTab = 'challenges' | 'users';
+
+interface AdminChallengePoolProps {
+  currentProfile: Profile | null;
+}
+
+export default function AdminChallengePool({ currentProfile }: AdminChallengePoolProps) {
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>('challenges');
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
 
-  // État pour savoir si on édite un défi
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // --- ÉTATS DÉFIS ---
+  const [challenges, setChallenges] = useState<ChallengePoolItem[]>([]);
+  const [challengeTypeFilter, setChallengeTypeFilter] = useState<'Tous' | 'chaos' | 'mensuel'>(
+    'Tous'
+  );
 
-  // États du formulaire
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState<'mensuel' | 'chaos'>('chaos');
-  const [durationDays, setDurationDays] = useState('7');
-  const [xpBonus, setXpBonus] = useState('100');
-  const [xpMalus, setXpMalus] = useState('50');
+  // Formulaire d'ajout de défi
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newType, setNewType] = useState<'chaos' | 'mensuel'>('chaos');
+  const [newXpBonus, setNewXpBonus] = useState(100);
+  const [newXpMalus, setNewXpMalus] = useState(20);
+  const [newDuration, setNewDuration] = useState(7);
 
-  const fetchPool = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('challenge_pool')
-        .select('*')
-        .order('created_at', { ascending: false });
+  // --- ÉTATS UTILISATEURS ---
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [searchUser, setSearchUser] = useState('');
 
-      if (error) throw error;
-      setChallenges(data || []);
-    } catch (error) {
-      console.error('Erreur lors de la récupération du pool:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Petit déclencheur pour rafraîchir les données sans fâcher le linter
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Effet de chargement de l'univers Admin
   useEffect(() => {
     let isMounted = true;
 
-    const loadPool = async () => {
-      setLoading(true);
+    const loadAdminData = async () => {
       try {
-        const { data, error } = await supabase
-          .from('challenge_pool')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const { data: chalData } = await supabase.from('challenge_pool').select('*');
+        const { data: userData } = await supabase.from('profiles').select('*');
 
-        if (error) throw error;
         if (isMounted) {
-          setChallenges(data || []);
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération du pool:', error);
-      } finally {
-        if (isMounted) {
+          setChallenges(chalData || []);
+          setUsers(userData || []);
           setLoading(false);
         }
+      } catch (err) {
+        console.error('Erreur admin load:', err);
+        if (isMounted) setLoading(false);
       }
     };
 
-    loadPool();
+    loadAdminData();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refreshTrigger]); // Écoute le trigger pour recharger proprement
 
-  // Active le mode édition et pré-remplit le formulaire
-  const startEdit = (item: ChallengePoolItem) => {
-    setEditingId(item.id);
-    setTitle(item.title);
-    setDescription(item.description || '');
-    setType(item.type);
-    setDurationDays(item.duration_days.toString());
-    setXpBonus(item.xp_bonus.toString());
-    setXpMalus(item.xp_malus.toString());
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setTitle('');
-    setDescription('');
-    setType('chaos');
-    setDurationDays('7');
-    setXpBonus('100');
-    setXpMalus('50');
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Soumission d'un nouveau défi
+  const handleAddChallenge = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    setSubmitting(true);
-
     try {
-      if (editingId) {
-        // Mode MISE À JOUR (Édition)
-        const { error } = await supabase
-          .from('challenge_pool')
-          .update({
-            title,
-            description: description.trim() || null,
-            type,
-            duration_days: parseInt(durationDays) || 7,
-            xp_bonus: parseInt(xpBonus) || 100,
-            xp_malus: parseInt(xpMalus) || 50,
-          })
-          .eq('id', editingId);
+      const { error: insertError } = await supabase.from('challenge_pool').insert([
+        {
+          title: newTitle,
+          description: newDesc,
+          type: newType,
+          xp_bonus: newXpBonus,
+          xp_malus: newXpMalus,
+          duration_days: newType === 'mensuel' ? 30 : newDuration,
+        },
+      ]);
+      if (insertError) throw insertError;
 
-        if (error) throw error;
-        setEditingId(null);
-      } else {
-        // Mode AJOUT classique
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) throw new Error('Non connecté');
+      setNewTitle('');
+      setNewDesc('');
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (err) {
+      console.error(err);
+      alert('Erreur lors de la création du défi.');
+    }
+  };
 
-        const { error } = await supabase.from('challenge_pool').insert([
-          {
-            title,
-            description: description.trim() || null,
-            type,
-            duration_days: parseInt(durationDays) || 7,
-            xp_bonus: parseInt(xpBonus) || 100,
-            xp_malus: parseInt(xpMalus) || 50,
-            created_by: user.id,
-          },
-        ]);
+  // Actions de modération utilisateur
+  const handleToggleAdmin = async (userId: string, currentRole: string) => {
+    const nextRole = currentRole === 'admin' ? 'user' : 'admin';
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: nextRole })
+        .eq('id', userId);
+      if (updateError) throw updateError;
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (err) {
+      console.error(err);
+      alert('Impossible de modifier le rôle.');
+    }
+  };
 
-        if (error) throw error;
+  const handleResetPassword = (email: string | undefined) => {
+    if (!email) return;
+    alert(`Lien de réinitialisation de mot de passe simulé pour : ${email}`);
+  };
+
+  const handleModerateProfile = async (userId: string) => {
+    if (confirm('Rétablir le pseudo par défaut pour cause de non-respect de la charte ?')) {
+      try {
+        const { error: modError } = await supabase
+          .from('profiles')
+          .update({ username: 'Lectrice_Modérée' })
+          .eq('id', userId);
+        if (modError) throw modError;
+        setRefreshTrigger((prev) => prev + 1);
+      } catch (err) {
+        console.error(err);
+        alert('Erreur de modération.');
       }
-
-      setTitle('');
-      setDescription('');
-      setXpBonus('100');
-      setXpMalus('50');
-      setDurationDays('7');
-      fetchPool();
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "Erreur d'enregistrement";
-      alert(msg);
-    } finally {
-      setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Retirer ce défi de la liste des possibles ?')) return;
-    try {
-      const { error } = await supabase.from('challenge_pool').delete().eq('id', id);
-      if (error) throw error;
-      if (editingId === id) cancelEdit();
-      fetchPool();
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Impossible de supprimer le défi.';
-      alert(msg);
-    }
-  };
+  // --- FILTRAGE DES DONNÉES ---
+  const filteredChallenges = challenges.filter(
+    (c) => challengeTypeFilter === 'Tous' || c.type === challengeTypeFilter
+  );
+
+  const filteredUsers = users.filter(
+    (u) =>
+      (u.username || '').toLowerCase().includes(searchUser.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(searchUser.toLowerCase())
+  );
+
+  if (!currentProfile || currentProfile.role !== 'admin') {
+    return (
+      <div className="p-8 text-center bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/50">
+        <p className="text-sm font-bold text-red-700 dark:text-red-400">
+          🛑 Accès Interdit. Vous devez être Grand Maître pour accéder à cette zone.
+        </p>
+      </div>
+    );
+  }
+
+  if (loading)
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-md border border-slate-100 dark:border-slate-700/50">
-      <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800 dark:text-white">
-        <ListPlus className="h-5 w-5 text-indigo-600" /> Fabrique à Défis (Admin)
-      </h2>
+    <div className="w-full space-y-6">
+      {/* 🧭 EN-TÊTE & MENU DE NAVIGATION ADMIN */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-xs">
+        <div>
+          <h2 className="text-sm font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <Shield className="h-4 w-4 text-indigo-600" /> Bureau des Grands Maîtres
+          </h2>
+          <p className="text-[11px] text-slate-400">
+            Contrôle le Chaos et veille sur la communauté.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Formulaire dynamique */}
-        <form
-          onSubmit={handleSubmit}
-          className="md:col-span-1 space-y-4 border-r border-slate-100 dark:border-slate-700/50 pr-0 md:pr-6"
-        >
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            {editingId ? '✏️ Modifier le défi' : '✨ Nouveau défi'}
-          </h3>
+        {/* Onglets internes Admin */}
+        <div className="flex gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl w-full sm:w-auto">
+          <button
+            onClick={() => setActiveAdminTab('challenges')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeAdminTab === 'challenges'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-white shadow-xs'
+                : 'text-slate-500'
+            }`}
+          >
+            <Dices className="h-3.5 w-3.5" />
+            <span>Défis ({challenges.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('users')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeAdminTab === 'users'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-white shadow-xs'
+                : 'text-slate-500'
+            }`}
+          >
+            <Users className="h-3.5 w-3.5" />
+            <span>Joueurs ({users.length})</span>
+          </button>
+        </div>
+      </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
-              Intitulé du défi *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ex: Lire un livre de poche"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
-              Description (Optionnel)
-            </label>
-            <textarea
-              placeholder="Précisions sur les contraintes..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-            />
-          </div>
-
-          {type === 'chaos' && (
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
-                Délai pour le réussir (en jours)
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={durationDays}
-                onChange={(e) => setDurationDays(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
-                Gain XP (Bonus)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={xpBonus}
-                onChange={(e) => setXpBonus(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
-                Perte XP (Malus)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={xpMalus}
-                onChange={(e) => setXpMalus(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Type de défi</label>
-            <div className="grid grid-cols-2 gap-2">
+      {/* 🎰 SECTION 1 : GESTION DES DÉFIS */}
+      {activeAdminTab === 'challenges' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* Formulaire de création */}
+          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/50 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Forger un défi
+            </h3>
+            <form onSubmit={handleAddChallenge} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Intitulé du défi
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="Ex: Lire un thriller sous la couette"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Description / Contrainte
+                </label>
+                <textarea
+                  required
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  placeholder="Précise les règles magiques..."
+                  rows={3}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Type de Sort
+                  </label>
+                  <select
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value as 'chaos' | 'mensuel')}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none"
+                  >
+                    <option value="chaos">🔮 Chaos</option>
+                    <option value="mensuel">📅 Mensuel</option>
+                  </select>
+                </div>
+                {newType === 'chaos' && (
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Durée (jours)
+                    </label>
+                    <input
+                      type="number"
+                      value={newDuration}
+                      onChange={(e) => setNewDuration(parseInt(e.target.value))}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Gain (XP)
+                  </label>
+                  <input
+                    type="number"
+                    value={newXpBonus}
+                    onChange={(e) => setNewXpBonus(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none text-emerald-600 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Malus (XP)
+                  </label>
+                  <input
+                    type="number"
+                    value={newXpMalus}
+                    onChange={(e) => setNewXpMalus(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none text-rose-600 font-bold"
+                  />
+                </div>
+              </div>
               <button
-                type="button"
-                onClick={() => setType('chaos')}
-                className={`py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 border transition-colors ${
-                  type === 'chaos'
-                    ? 'bg-purple-50 border-purple-300 text-purple-700 dark:bg-purple-950/30 dark:border-purple-800 dark:text-purple-300'
-                    : 'bg-white border-slate-200 text-slate-500 dark:bg-slate-900 dark:border-slate-700'
-                }`}
+                type="submit"
+                className="w-full cursor-pointer bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold py-2 rounded-xl mt-2 transition-all"
               >
-                <Sparkles className="h-3 w-3" /> Chaos
+                Ajouter au Pool de l'Univers
               </button>
-              <button
-                type="button"
-                onClick={() => setType('mensuel')}
-                className={`py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 border transition-colors ${
-                  type === 'mensuel'
-                    ? 'bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300'
-                    : 'bg-white border-slate-200 text-slate-500 dark:bg-slate-900 dark:border-slate-700'
-                }`}
-              >
-                <Calendar className="h-3 w-3" /> Mensuel
-              </button>
-            </div>
+            </form>
           </div>
 
-          <div className="flex gap-2">
-            {editingId && (
-              <button
-                type="button"
-                onClick={cancelEdit}
-                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium py-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-colors"
-              >
-                <X className="h-3 w-3" /> Annuler
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={submitting}
-              className={`flex-1 text-white font-medium py-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-colors disabled:opacity-50 ${
-                editingId
-                  ? 'bg-emerald-600 hover:bg-emerald-500'
-                  : 'bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500'
-              }`}
-            >
-              {submitting ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : editingId ? (
-                <>
-                  <Save className="h-3 w-3" /> Mettre à jour
-                </>
-              ) : (
-                <>
-                  <Plus className="h-3 w-3" /> Injecter
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-
-        {/* Liste des défis avec bouton Éditer */}
-        <div className="md:col-span-2 space-y-3 max-h-[520px] overflow-y-auto pr-1">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-white dark:bg-slate-800 pb-2">
-            Réservoir actuel ({challenges.length})
-          </h3>
-
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-            </div>
-          ) : challenges.length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-4">Le réservoir est vide.</p>
-          ) : (
-            <div className="space-y-2">
-              {challenges.map((item) => (
-                <div
-                  key={item.id}
-                  className={`flex items-start justify-between p-4 rounded-xl border transition-colors ${
-                    editingId === item.id
-                      ? 'bg-indigo-50/50 border-indigo-300 dark:bg-indigo-950/20 dark:border-indigo-800'
-                      : 'bg-slate-50 border-slate-100 dark:bg-slate-900/40 dark:border-slate-700/30'
+          {/* Liste filtrable du pool existant */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex gap-1 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-slate-100 dark:border-slate-700/50 shadow-xs overflow-x-auto">
+              {(['Tous', 'chaos', 'mensuel'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setChallengeTypeFilter(t)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold capitalize cursor-pointer transition-colors ${
+                    challengeTypeFilter === t
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
-                  <div className="flex-1 min-w-0 pr-3 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                          item.type === 'chaos'
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
-                        }`}
-                      >
-                        {item.type === 'chaos' ? '🎲 CHAOS' : '📅 MENSUEL'}
-                      </span>
-                      <h4 className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                        {item.title}
-                      </h4>
-                    </div>
-                    {item.description && (
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                        {item.description}
-                      </p>
-                    )}
+                  {t === 'chaos'
+                    ? '🔮 Défis du Chaos'
+                    : t === 'mensuel'
+                      ? '📅 Défis Mensuels'
+                      : '✨ Tout afficher'}
+                </button>
+              ))}
+            </div>
 
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-[10px] text-slate-500 dark:text-slate-400">
-                      {item.type === 'chaos' && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-purple-500" /> {item.duration_days}j
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/40">
+              {filteredChallenges.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400 italic">
+                  Aucun défi de ce type enregistré.
+                </div>
+              ) : (
+                filteredChallenges.map((c) => (
+                  <div key={c.id} className="p-4 flex items-start justify-between gap-4 text-xs">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${c.type === 'chaos' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}`}
+                        >
+                          {c.type.toUpperCase()}
                         </span>
-                      )}
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                        <Trophy className="h-3 w-3" /> +{item.xp_bonus} XP
-                      </span>
-                      <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
-                        <Skull className="h-3 w-3" /> -{item.xp_malus} XP
-                      </span>
+                        <h4 className="font-bold text-slate-800 dark:text-white">{c.title}</h4>
+                      </div>
+                      <p className="text-slate-400 mt-1">{c.description}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        ⏱️ {c.type === 'mensuel' ? 'Tout le mois' : `${c.duration_days} jours`} •{' '}
+                        <span className="text-emerald-600">+{c.xp_bonus} XP</span> •{' '}
+                        <span className="text-rose-500">-{c.xp_malus} XP</span>
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🧙‍♂️ SECTION 2 : GESTION DES UTILISATRICES */}
+      {activeAdminTab === 'users' && (
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 max-w-sm">
+            <input
+              type="text"
+              placeholder="Rechercher par pseudo ou email..."
+              value={searchUser}
+              onChange={(e) => setSearchUser(e.target.value)}
+              className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border-none rounded-xl text-xs text-slate-800 dark:text-white"
+            />
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/40 shadow-xs">
+            {filteredUsers.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400 italic">
+                Aucune lectrice ne correspond à ce nom.
+              </div>
+            ) : (
+              filteredUsers.map((u) => (
+                <div
+                  key={u.id}
+                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-indigo-600 text-sm">
+                      {(u.username || 'L')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-bold text-slate-800 dark:text-white">
+                          {u.username || 'Lectrice Sans Nom'}
+                        </h4>
+                        {u.role === 'admin' && (
+                          <span className="text-[9px] bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 px-1.5 py-0.2 rounded-md font-black uppercase tracking-wider">
+                            GM Admin
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        {u.email || 'Pas de mail rattaché'}
+                      </p>
+                      <p className="text-[10px] text-indigo-500 font-bold mt-0.5">
+                        ⭐ Niveau {Math.floor((u.xp || 0) / 1000) + 1} ({u.xp || 0} XP)
+                      </p>
                     </div>
                   </div>
 
-                  {/* Actions : Éditer et Supprimer */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 self-end sm:self-center flex-wrap">
                     <button
-                      onClick={() => startEdit(item)}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
-                      title="Modifier ce défi"
+                      onClick={() => handleModerateProfile(u.id)}
+                      className="cursor-pointer flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-700 px-2.5 py-1.5 rounded-xl border border-amber-200 transition-all font-medium"
+                      title="Nettoyer le profil"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Ban className="h-3 w-3" /> Modérer
                     </button>
+
                     <button
-                      onClick={() => handleDelete(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
-                      title="Supprimer"
+                      onClick={() => handleResetPassword(u.email)}
+                      className="cursor-pointer flex items-center gap-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-900/60 text-slate-600 dark:text-slate-300 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-all font-medium"
+                      title="Forcer reset pass"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Key className="h-3 w-3" /> Clé/Pass
+                    </button>
+
+                    <button
+                      onClick={() => handleToggleAdmin(u.id, u.role || 'user')}
+                      className={`cursor-pointer flex items-center gap-1 px-2.5 py-1.5 rounded-xl font-bold transition-all ${
+                        u.role === 'admin'
+                          ? 'bg-rose-600 text-white hover:bg-rose-700'
+                          : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                      }`}
+                    >
+                      <UserCheck className="h-3 w-3" />{' '}
+                      {u.role === 'admin' ? 'Destituer' : 'Promouvoir'}
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

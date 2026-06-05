@@ -14,7 +14,8 @@ import {
   ShieldAlert,
   LogOut,
 } from 'lucide-react';
-import BookForm from './components/BookForm';
+import BookForm from '@/components/BookForm';
+import Auth from '@/components/Auth';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -79,24 +80,7 @@ export default function App() {
   if (!session) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 text-center max-w-sm w-full space-y-4">
-          <div className="bg-indigo-50 dark:bg-indigo-950/50 w-12 h-12 rounded-xl flex items-center justify-center mx-auto text-indigo-600">
-            <BookOpen className="h-6 w-6" />
-          </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white">
-            Chaotic Library 📚
-          </h1>
-          <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
-            Connecte-toi à ton profil de lecture pour invoquer le Chaos et suivre tes statistiques
-            de jeu.
-          </p>
-          <button
-            onClick={() => alert('Bientôt la vraie page de Login !')}
-            className="w-full bg-slate-900 dark:bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md transition-transform active:scale-98"
-          >
-            Se connecter au Donjon
-          </button>
-        </div>
+        <Auth />
       </div>
     );
   }
@@ -157,17 +141,19 @@ export default function App() {
               <span>Ajouter un livre</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('admin')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                activeTab === 'admin'
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
-              <span>Administration</span>
-            </button>
+            {profile?.role === 'admin' && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                  activeTab === 'admin'
+                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                <span>Administration</span>
+              </button>
+            )}
           </div>
 
           {/* Profil */}
@@ -221,7 +207,7 @@ export default function App() {
 
         {activeTab === 'admin' && (
           <div className="animate-in fade-in duration-200">
-            <AdminChallengePool />
+            <AdminChallengePool currentProfile={profile} />
           </div>
         )}
       </main>
