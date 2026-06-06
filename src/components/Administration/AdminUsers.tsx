@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Profile } from '@/types/users.type';
 import { supabase } from '@/lib/supabaseClient';
 import { Ban, Key, UserCheck } from 'lucide-react';
-import { getPlayerLevelInfo } from '@/lib/levelUtils';
+import { getPlayerLevelInfo } from '@/utils/levelUtils';
 import { Level } from '@/types/levels.type';
 
 interface AdminUsersProps {
