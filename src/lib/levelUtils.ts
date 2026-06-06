@@ -1,6 +1,6 @@
-import { LevelConfig } from '@/types';
+import { Level } from '@/types/levels.type';
 
-export function getPlayerLevelInfo(xp: number, levels: LevelConfig[]) {
+export function getPlayerLevelInfo(xp: number, levels: Level[]) {
   // On trie les niveaux par XP croissants
   const sortedLevels = [...levels].sort((a, b) => a.xp_min - b.xp_min);
 

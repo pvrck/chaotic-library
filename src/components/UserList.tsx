@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { UserProfile } from '@/types';
-import { formatDate } from '@/utils/date';
+import { UserProfile } from '@/types/challenges.type';
+import { formatDate } from '@/utils/dateUtils';
 import { Search, Loader2, Trophy, Calendar, ChevronLeft, ChevronRight, User } from 'lucide-react';
 
 type UserSortOption = 'xp_desc' | 'username_asc' | 'created_desc' | 'created_asc';
