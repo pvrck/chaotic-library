@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Session } from '@supabase/supabase-js';
-import { Profile } from '@/types/challenges.type';
+import { Profile } from '@/types/users.type';
 
 // On définit ce que notre contexte va partager avec les pages
 interface AuthContextType {
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+      setSession(session || undefined);
       if (session?.user) {
         fetchProfile(session.user.id).then(() => setLoading(false));
       } else {
@@ -47,11 +47,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      setSession(session || undefined);
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
-        setProfile(null);
+        setProfile(undefined);
         setLoading(false);
       }
     });

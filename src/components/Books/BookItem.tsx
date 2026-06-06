@@ -81,7 +81,7 @@ export const BookItem = ({ book, onStatusChange, onOpenDetails, onEditClick }: B
       <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
         {book.status === EBookStatus.ALire && (
           <button
-            onClick={() => onStatusChange(book.id, EBookStatus.EnCours)}
+            onClick={() => onStatusChange(book.id!, EBookStatus.EnCours)}
             className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             ⚔️ Commencer <span className="text-[10px] opacity-90 font-normal">(+5 XP)</span>
@@ -90,13 +90,13 @@ export const BookItem = ({ book, onStatusChange, onOpenDetails, onEditClick }: B
         {book.status === EBookStatus.EnCours && (
           <>
             <button
-              onClick={() => onStatusChange(book.id, EBookStatus.Lu)}
+              onClick={() => onStatusChange(book.id!, EBookStatus.Lu)}
               className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               🏆 Terminer <span className="text-[10px] opacity-90 font-normal">(+120 XP)</span>
             </button>
             <button
-              onClick={() => onStatusChange(book.id, EBookStatus.Abandonne)}
+              onClick={() => onStatusChange(book.id!, EBookStatus.Abandonne)}
               className="cursor-pointer bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 font-medium px-3 py-1.5 rounded-xl border border-slate-200 hover:border-rose-200 transition-all"
             >
               Abandonner

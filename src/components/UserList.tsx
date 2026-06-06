@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { UserProfile } from '@/types/challenges.type';
+import { UserProfile } from '@/types/users.type';
 import { formatDate } from '@/utils/dateUtils';
 import { Search, Loader2, Trophy, Calendar, ChevronLeft, ChevronRight, User } from 'lucide-react';
 

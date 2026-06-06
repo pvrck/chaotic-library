@@ -73,7 +73,7 @@ export interface GoogleBookImageLinks {
 }
 
 export interface GoogleBookSuggestion {
-  id: string;
+  id?: string;
   title: string;
   author: string;
   isbn: string | null;

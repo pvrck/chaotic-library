@@ -92,7 +92,7 @@ export const BooksPage = () => {
 
         {/* 📑 SOUS-ONGLETS DE STATUT */}
         <div className="flex gap-1 overflow-x-auto pb-1">
-          {(['Tous', 'A lire', 'En cours', 'Lu', 'Abandonné'] as const).map((st) => (
+          {(['Tous', ...Object.values(EBookStatus)] as const).map((st) => (
             <button
               key={st}
               onClick={() => {

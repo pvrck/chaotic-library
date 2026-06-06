@@ -5,7 +5,7 @@ import { Check, Edit2, Plus, Trash2, X } from 'lucide-react';
 
 interface AdminLevelsProps {
   levels: Level[];
-  setRefreshTrigger: (value: number) => void;
+  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export const AdminLevels = ({ levels, setRefreshTrigger }: AdminLevelsProps) => {
