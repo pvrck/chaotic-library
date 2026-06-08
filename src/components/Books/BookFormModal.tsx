@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
-import { searchGoogleBooks } from '@/services/googleBooks.service';
+import { searchGoogleBooks } from '@/services/googleBooksService';
 import { X, BookOpen, Loader2 } from 'lucide-react';
 import { Book, BookFormat, BookStatus, EBookFormat, EBookStatus } from '@/types/books.type';
 import { GoogleBookSuggestion } from '@/types/googleBooks.type';
@@ -234,8 +234,14 @@ export default function BookFormModal({
           )}
 
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Titre</label>
+            <label
+              className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+              htmlFor="book-title-input"
+            >
+              Titre
+            </label>
             <input
+              id="book-title-input"
               type="text"
               required
               value={formData.title}
@@ -245,10 +251,14 @@ export default function BookFormModal({
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+              htmlFor="book-author-input"
+            >
               Auteur(s)
             </label>
             <input
+              id="book-author-input"
               type="text"
               required
               value={formData.author}
@@ -258,10 +268,14 @@ export default function BookFormModal({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">
+            <label
+              className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider"
+              htmlFor="book-isbn-input"
+            >
               Code ISBN (10 ou 13 chiffres)
             </label>
             <input
+              id="book-isbn-input"
               type="text"
               placeholder="Ex: 9782266200264"
               value={formData.isbn || ''}
@@ -274,10 +288,14 @@ export default function BookFormModal({
 
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="book-saga-input"
+              >
                 Saga (Optionnel)
               </label>
               <input
+                id="book-saga-input"
                 type="text"
                 value={formData.saga_name || ''}
                 onChange={(e) => setFormData({ ...formData, saga_name: e.target.value })}
@@ -285,10 +303,14 @@ export default function BookFormModal({
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="book-vol-input"
+              >
                 Vol.
               </label>
               <input
+                id="book-vol-input"
                 type="number"
                 value={formData.saga_volume || ''}
                 onChange={(e) =>
@@ -304,10 +326,14 @@ export default function BookFormModal({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="book-format-select"
+              >
                 Format
               </label>
               <select
+                id="book-format-select"
                 value={formData.format}
                 onChange={(e) => setFormData({ ...formData, format: e.target.value as BookFormat })}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500"
@@ -319,10 +345,14 @@ export default function BookFormModal({
               </select>
             </div>
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="book-status-select"
+              >
                 Statut
               </label>
               <select
+                id="book-format-select"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as BookStatus })}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500"
@@ -353,8 +383,14 @@ export default function BookFormModal({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Date d'ajout</label>
+              <label
+                className="block text-xs font-medium text-slate-500 mb-1"
+                htmlFor="book-addDate-input"
+              >
+                Date d'ajout
+              </label>
               <input
+                id="book-addDate-input"
                 type="date"
                 value={formData.added_at ? formData.added_at.split('T')[0] : ''}
                 onChange={(e) =>

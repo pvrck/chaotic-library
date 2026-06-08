@@ -6,7 +6,7 @@ import { EChallengeType } from '@/types/challenges.type';
 import { ActiveChallenges } from './ActiveChallenges';
 import { ChallengeBlock } from './ChallengeBlock';
 
-export default function ChallengeBoard() {
+export const ChallengeBoard = () => {
   const { profile } = useAuth();
 
   const [activeChallenges, setActiveChallenges] = useState<UserChallenge[]>([]);
@@ -53,4 +53,4 @@ export default function ChallengeBoard() {
       />
     </>
   );
-}
+};

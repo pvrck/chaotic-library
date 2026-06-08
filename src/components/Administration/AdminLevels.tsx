@@ -76,10 +76,14 @@ export const AdminLevels = ({ levels, setRefreshTrigger }: AdminLevelsProps) => 
         </h3>
         <form onSubmit={handleAddLevel} className="space-y-3 text-xs">
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+              htmlFor="level-xp-min"
+            >
               XP Minimum requis
             </label>
             <input
+              id="level-xp-min"
               type="number"
               required
               min={0}
@@ -89,10 +93,14 @@ export const AdminLevels = ({ levels, setRefreshTrigger }: AdminLevelsProps) => 
             />
           </div>
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+              htmlFor="level-title"
+            >
               Nom du Titre Mystique
             </label>
             <input
+              id="level-title"
               type="text"
               required
               value={newLevelTitle}
@@ -150,12 +158,16 @@ export const AdminLevels = ({ levels, setRefreshTrigger }: AdminLevelsProps) => 
                           <button
                             onClick={() => handleUpdateLevel(lvl.id)}
                             className="p-1 bg-emerald-600 text-white rounded-md cursor-pointer"
+                            title="Valider la modification"
+                            aria-label="Valider la modification"
                           >
                             <Check className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => setEditingLevelId(null)}
                             className="p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md cursor-pointer"
+                            title="Annuler la modification"
+                            aria-label="Annuler la modification"
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>

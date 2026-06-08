@@ -66,7 +66,10 @@ export default function Auth() {
 
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="user-email"
+              >
                 Adresse email
               </label>
               <div className="relative">
@@ -74,6 +77,7 @@ export default function Auth() {
                   <Mail className="h-5 w-5" />
                 </div>
                 <input
+                  id="user-email"
                   type="email"
                   required
                   value={email}
@@ -85,7 +89,10 @@ export default function Auth() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="user-password"
+              >
                 Mot de passe
               </label>
               <div className="relative">
@@ -93,6 +100,7 @@ export default function Auth() {
                   <Lock className="h-5 w-5" />
                 </div>
                 <input
+                  id="user-password"
                   type="password"
                   required
                   value={password}
