@@ -47,6 +47,23 @@ export const BooksPage = () => {
     }
   };
 
+  const handleDeleteBook = async (bookId: string) => {
+    try {
+      const { error } = await supabase
+        .from('books') // Utilise le nom exact de ta table de liaison/livres
+        .delete()
+        .eq('id', bookId);
+
+      if (error) throw error;
+
+      // Mise à jour de l'état local pour faire disparaître le livre proprement
+      b.fetchBooks();
+    } catch (err) {
+      console.error('Erreur lors de la suppression du livre :', err);
+      alert('Impossible de supprimer le livre. Recommence pour voir ?');
+    }
+  };
+
   if (b.loading) {
     return (
       <div className="flex justify-center py-12">
@@ -128,6 +145,7 @@ export const BooksPage = () => {
                     setBookToEdit(bk);
                     setIsFormModalOpen(true);
                   }}
+                  onDeleteBook={handleDeleteBook}
                 />
               ))}
             </div>

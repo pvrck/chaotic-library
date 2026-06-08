@@ -1,4 +1,4 @@
-import { Edit3, BookOpen } from 'lucide-react';
+import { Edit3, BookOpen, Trash2 } from 'lucide-react';
 import { formatDate } from '@/utils/dateUtils';
 import { Book, EBookStatus } from '@/types/books.type';
 
@@ -7,9 +7,23 @@ interface BookItemProps {
   onStatusChange: (id: string, nextStatus: EBookStatus) => Promise<void>;
   onOpenDetails: (book: Book) => void;
   onEditClick: (book: Book) => void;
+  onDeleteBook: (id: string) => void;
 }
 
-export const BookItem = ({ book, onStatusChange, onOpenDetails, onEditClick }: BookItemProps) => {
+export const BookItem = ({
+  book,
+  onStatusChange,
+  onOpenDetails,
+  onEditClick,
+  onDeleteBook,
+}: BookItemProps) => {
+  // Fonction de confirmation rapide pour éviter les miss-clicks
+  const handleDeleteClick = () => {
+    if (window.confirm(`Es-tu sûre de vouloir supprimer "${book.title}" de ta bibliothèque ?`)) {
+      onDeleteBook(book.id!);
+    }
+  };
+
   return (
     <div
       key={book.id}
@@ -113,6 +127,14 @@ export const BookItem = ({ book, onStatusChange, onOpenDetails, onEditClick }: B
             🛑 Abandonné
           </span>
         )}
+
+        <button
+          onClick={handleDeleteClick}
+          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors cursor-pointer"
+          title="Supprimer le livre"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );

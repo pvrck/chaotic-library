@@ -17,7 +17,7 @@ export const useBooks = () => {
   const [formatFilter, setFormatFilter] = useState<BookFormat | 'Tous'>('Tous');
   const [sortBy, setSortBy] = useState<SortOption>('added_desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 20;
 
   const fetchBooks = async () => {
     try {
