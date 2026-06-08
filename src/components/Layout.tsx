@@ -1,96 +1,118 @@
-import { Outlet, useNavigate, NavLink } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Book, BookOpen, LayoutDashboard, LogOut, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { Book, BookOpen, LayoutDashboard, LogOut, ShieldAlert, Menu, X } from 'lucide-react';
 
 export default function Layout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Fermer le menu burger dès qu'on change de page
+  useEffect(() => {
+    const handle = requestAnimationFrame(() => {
+      setIsMenuOpen(false);
+    });
+
+    return () => cancelAnimationFrame(handle);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/login'); // Redirection automatique après déconnexion
+    navigate('/login');
   };
 
   const getLinkClass = ({ isActive }: { isActive: boolean }) => {
     const baseClasses =
-      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-colors shrink-0';
-
-    const activeClasses = 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400';
-
+      'flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-colors w-full';
+    const activeClasses = 'bg-indigo-600 text-white shadow-md';
     const inactiveClasses =
-      'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800';
-
+      'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
     return `${baseClasses} ${isActive ? activeClasses : inactiveClasses}`;
   };
 
   return (
-    <div className="min-h-screen md:h-screen bg-slate-50 dark:bg-slate-940 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row md:overflow-hidden">
-      {/* 🧭 BARRE DE NAVIGATION (Accessible & Sémantique avec <nav>) */}
-      <nav className="w-full md:w-64 md:h-full bg-white dark:bg-slate-900 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-4 space-y-6 flex flex-col justify-between shrink-0 overflow-y-auto md:overflow-y-visible">
+    <div className="min-h-screen md:h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row md:overflow-hidden">
+      {/* 📱 HEADER MOBILE (Visible uniquement sur mobile) */}
+      <header className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between sticky top-0 z-50">
+        <h1 className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2">
+          <BookOpen className="h-4 w-4" />
+          Chaotic Library
+        </h1>
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="p-2 text-slate-600 dark:text-slate-300 cursor-pointer"
+        >
+          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </header>
+
+      {/* 🧭 SIDEBAR / DRAWER COMPLÈTE */}
+      <nav
+        className={`
+        fixed inset-0 top-[61px] z-40 bg-white dark:bg-slate-900 p-6 flex flex-col justify-between transition-transform duration-300 transform
+        md:relative md:top-0 md:transform-none md:w-64 md:h-full md:border-r border-slate-200 dark:border-slate-800 md:flex
+        ${isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}
+      >
         <div className="space-y-6">
-          {/* Titre / Logo */}
-          <div className="px-2">
-            <h1 className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2 ">
-              <BookOpen className="h-4 w-4" aria-hidden="true" />
+          {/* Titre caché sur Mobile (déjà dans le header), visible sur Desktop */}
+          <div className="px-2 hidden md:block">
+            <h1 className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
               Chaotic Library
             </h1>
           </div>
 
-          {/* Liens de navigation avec <Link> au lieu de boutons */}
-          <div className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
+          {/* Liens de navigation verticaux */}
+          <div className="flex flex-col gap-2">
             <NavLink to="/" className={getLinkClass} end>
-              <LayoutDashboard className="h-4 w-4" />
+              <LayoutDashboard className="h-5 w-5 md:h-4 md:w-4" />
               <span>Tableau de bord</span>
             </NavLink>
 
             <NavLink to="/livres" className={getLinkClass}>
-              <Book className="h-4 w-4" />
+              <Book className="h-5 w-5 md:h-4 md:w-4" />
               <span>Ma Bibliothèque</span>
             </NavLink>
 
             <NavLink to="/administration" className={getLinkClass}>
-              <ShieldAlert className="h-4 w-4" />
+              <ShieldAlert className="h-5 w-5 md:h-4 md:w-4" />
               <span>Administration</span>
             </NavLink>
           </div>
         </div>
 
-        <div className="flex flex-row md:flex-col gap-2 pt-2 md:pt-0 border-t border-slate-100 dark:border-slate-800 md:space-y-2">
-          {/* Version NavLink de ton bouton magique ✨ */}
+        {/* Profil et Déconnexion en bas */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
           <NavLink
             to="/profil"
             className={({ isActive }) =>
-              `cursor-pointer text-[11px] font-bold px-2.5 py-2 rounded-xl flex items-center gap-2.5 transition-all w-full min-w-[50px] sm:min-w-0 ${
+              `text-sm font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all ${
                 isActive
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300'
               }`
             }
-            title="Mon Profil"
           >
-            {/* L'émoji ou l'avatar */}
-            <span className="text-sm select-none shrink-0">{profile?.avatar_url || '📖'}</span>
-
-            {/* Le texte du pseudo (caché sur micro-mobile, visible dès 'sm') */}
-            <span className="truncate max-w-[90px] md:max-w-[140px] hidden sm:inline">
-              {profile?.username || 'Lectrice'}
-            </span>
+            <span className="text-lg select-none">{profile?.avatar_url || '📖'}</span>
+            <span className="truncate">{profile?.username || 'Pénélope'}</span>
           </NavLink>
 
-          {/* Bouton Déconnexion */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer text-left w-full md:mt-auto shrink-0"
+            className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer text-left w-full"
           >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline md:inline">Se déconnecter</span>
+            <LogOut className="h-5 w-5 md:h-4 md:w-4" />
+            <span>Se déconnecter</span>
           </button>
         </div>
       </nav>
 
       {/* 📦 CONTENU DYNAMIQUE DE LA ROUTE */}
-      <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto overflow-y-auto">
+      <main className="flex-1 h-full p-4 md:p-8 max-w-7xl w-full mx-auto overflow-y-auto">
         <Outlet />
       </main>
     </div>
