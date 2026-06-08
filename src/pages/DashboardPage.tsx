@@ -10,8 +10,8 @@ export const DashboardPage = () => {
   return (
     <div className="animate-in fade-in duration-200">
       <div className="w-full max-w-4xl mx-auto space-y-6">
-        <div className="space-y-1 py-2">
-          <h2 className="text-xl md:text-2xl font-black tracking-tight text-slate-800 dark:text-white">
+        <div className="space-y-1 py-4 px-2">
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-slate-50">
             Bienvenue, <span className="text-indigo-600 dark:text-indigo-400">{username}</span> ! 👋
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
