@@ -6,8 +6,9 @@ import { Loader2 } from 'lucide-react';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { BooksPage } from '@/pages/BooksPage';
-import { AdministrationPage } from './pages/AdministrationPage';
-import { ProfilePage } from './pages/ProfilePage';
+import { AdministrationPage } from '@/pages/AdministrationPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 export default function App() {
   const { session, loading } = useAuth();
@@ -32,7 +33,7 @@ export default function App() {
           <Route path="profil" element={<ProfilePage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
