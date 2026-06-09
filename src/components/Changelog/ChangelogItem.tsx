@@ -14,7 +14,9 @@ export const ChangelogItem = ({ version, date, title, content }: ChangelogItemPr
 
       {/* Rendu du contenu HTML (nécessite de gérer la sécurité si tu ne maîtrises pas la source) */}
       <div
-        className="prose prose-sm max-w-none text-gray-700"
+        className="prose prose-slate prose-sm max-w-none 
+                   prose-headings:font-bold 
+                   prose-ul:list-disc prose-ul:ml-4"
         dangerouslySetInnerHTML={{ __html: content }}
       />
     </div>
