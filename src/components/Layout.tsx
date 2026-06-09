@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
-import { Book, BookOpen, LayoutDashboard, LogOut, ShieldAlert, Menu, X } from 'lucide-react';
+import { Book, LayoutDashboard, LogOut, ShieldAlert, Menu, X } from 'lucide-react';
+import logo from '@/assets/chaotic-librairy-logo.png';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export default function Layout() {
       {/* 📱 HEADER MOBILE (Visible uniquement sur mobile) */}
       <header className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between sticky top-0 z-50">
         <h1 className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2">
-          <BookOpen className="h-4 w-4" />
+          <img src={logo} alt="" aria-hidden className="h-10 w-10" />
           Chaotic Library
         </h1>
         <button
@@ -61,7 +62,7 @@ export default function Layout() {
           {/* Titre caché sur Mobile (déjà dans le header), visible sur Desktop */}
           <div className="px-2 hidden md:block">
             <h1 className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
+              <img src={logo} alt="" aria-hidden className="h-10 w-10" />
               Chaotic Library
             </h1>
           </div>
