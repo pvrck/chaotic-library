@@ -2,6 +2,7 @@ export const LOGIN = '/login';
 
 export const LIVRES = '/livres';
 export const PROFIL = '/profil';
+export const CHANGELOG = '/changelog';
 
 export const ADMIN = '/admin';
 export const ADMIN_UTILISATEURS = `${ADMIN}/utilisateurs`;

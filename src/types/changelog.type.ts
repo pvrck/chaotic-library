@@ -6,3 +6,10 @@ export interface Changelog {
   created_at: string;
   is_published: boolean;
 }
+
+export interface ChangelogItemProps {
+  version: string;
+  date: string;
+  title: string;
+  content: string;
+}

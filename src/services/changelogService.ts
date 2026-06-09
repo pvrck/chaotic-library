@@ -35,3 +35,23 @@ export const updateChangelog = async (
   if (error) throw new Error(error.message);
   return updatedLog;
 };
+
+// Récupérer uniquement les IDs des changelogs lus par l'utilisateur
+export const getReadChangelogIds = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('changelog_views') // ta nouvelle table
+    .select('changelog_id')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+  return data.map((item) => item.changelog_id);
+};
+
+// Marquer un changelog comme lu
+export const markChangelogAsRead = async (userId: string, changelogId: string) => {
+  const { error } = await supabase
+    .from('changelog_views')
+    .insert([{ user_id: userId, changelog_id: changelogId }]);
+
+  if (error) throw error;
+};
