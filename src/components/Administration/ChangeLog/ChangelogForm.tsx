@@ -1,6 +1,7 @@
 import { createChangelog, updateChangelog } from '@/services/changelogService';
 import { Changelog } from '@/types/changelog.type';
 import { useState } from 'react';
+import { TiptapEditor } from './TiptapEditor';
 
 interface ChangelogFormProps {
   onSuccess?: () => void;
@@ -77,16 +78,10 @@ export const ChangelogForm = ({ initialData, onSuccess }: ChangelogFormProps) =>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1" htmlFor="content">
-          Contenu
-        </label>
-        <textarea
-          id="content"
-          required
-          rows={4}
-          value={formData.content}
-          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-          className="w-full p-2 border border-gray-300 rounded"
+        <label className="block text-sm font-medium mb-1">Contenu</label>
+        <TiptapEditor
+          content={formData.content}
+          onChange={(html) => setFormData((prev) => ({ ...prev, content: html }))}
         />
       </div>
 

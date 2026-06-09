@@ -24,29 +24,31 @@ export const ChangelogTable = ({ logs, onAction, onEdit }: ChangelogTableProps) 
 
   return (
     <table className="w-full bg-white rounded-lg shadow">
-      {logs.map((log) => (
-        <tr key={log.id} className="border-b">
-          <td className="p-4">{log.title}</td>
-          <td className="p-4 flex gap-2">
-            <button
-              title="Modifier"
-              aria-label="Modifier"
-              onClick={() => onEdit(log)}
-              className="text-blue-500"
-            >
-              <Edit2 size={18} />
-            </button>
-            <button
-              title="Supprimer"
-              aria-label="Supprimer"
-              onClick={() => handleDelete(log.id)}
-              className="text-red-500"
-            >
-              <Trash2 size={18} />
-            </button>
-          </td>
-        </tr>
-      ))}
+      <tbody>
+        {logs.map((log) => (
+          <tr key={log.id} className="border-b">
+            <td className="p-4">{log.title}</td>
+            <td className="p-4 flex gap-2">
+              <button
+                title="Modifier"
+                aria-label="Modifier"
+                onClick={() => onEdit(log)}
+                className="text-blue-500"
+              >
+                <Edit2 size={18} />
+              </button>
+              <button
+                title="Supprimer"
+                aria-label="Supprimer"
+                onClick={() => handleDelete(log.id)}
+                className="text-red-500"
+              >
+                <Trash2 size={18} />
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
     </table>
   );
 };
