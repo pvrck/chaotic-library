@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 import { Book, LayoutDashboard, LogOut, ShieldAlert, Menu, X } from 'lucide-react';
 import logo from '@/assets/chaotic-librairy-logo.png';
+import * as route from '@/constants/routes';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function Layout() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate(route.LOGIN);
   };
 
   const getLinkClass = ({ isActive }: { isActive: boolean }) => {
@@ -74,12 +75,12 @@ export default function Layout() {
               <span>Tableau de bord</span>
             </NavLink>
 
-            <NavLink to="/livres" className={getLinkClass}>
+            <NavLink to={route.LIVRES} className={getLinkClass}>
               <Book className="h-5 w-5 md:h-4 md:w-4" />
               <span>Ma Bibliothèque</span>
             </NavLink>
 
-            <NavLink to="/administration" className={getLinkClass}>
+            <NavLink to={route.ADMIN} className={getLinkClass}>
               <ShieldAlert className="h-5 w-5 md:h-4 md:w-4" />
               <span>Administration</span>
             </NavLink>
@@ -89,7 +90,7 @@ export default function Layout() {
         {/* Profil et Déconnexion en bas */}
         <div className="flex flex-col gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
           <NavLink
-            to="/profil"
+            to={route.PROFIL}
             className={({ isActive }) =>
               `text-sm font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all ${
                 isActive
