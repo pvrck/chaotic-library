@@ -15,9 +15,9 @@ export const AdminLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white p-6 flex flex-col">
+      <aside className="w-64 bg-gray-900 text-white p-6 flex flex-col h-full shrink-0">
         <h1 className="text-xl font-bold mb-8 text-indigo-400">Panel Admin</h1>
         <nav className="space-y-4 flex-grow">
           <NavLink to={route.ADMIN_CHANGELOG} className={getLinkClass}>
@@ -42,7 +42,7 @@ export const AdminLayout = () => {
       </aside>
 
       {/* Zone de contenu */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 overflow-y-auto p-8">
         <div className="max-w-4xl mx-auto">
           {/* L'Outlet rendra ici ta page /admin/changelog */}
           <Outlet />
