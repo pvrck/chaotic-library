@@ -121,10 +121,14 @@ export const ProfilePage = () => {
 
             <form onSubmit={handleUpdateProfile} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label
+                  className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                  htmlFor="user-name"
+                >
                   Nom dans la guilde (Pseudo)
                 </label>
                 <input
+                  id="user-name"
                   type="text"
                   required
                   value={username}
@@ -174,10 +178,14 @@ export const ProfilePage = () => {
 
             <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label
+                  className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                  htmlFor="user-new-password"
+                >
                   Nouveau mot de passe
                 </label>
                 <input
+                  id="user-new-password"
                   type="password"
                   required
                   minLength={6}
@@ -189,10 +197,14 @@ export const ProfilePage = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label
+                  className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                  htmlFor="user-new-password-bis"
+                >
                   Confirmer le mot de passe
                 </label>
                 <input
+                  id="user-new-password-bis"
                   type="password"
                   required
                   minLength={6}

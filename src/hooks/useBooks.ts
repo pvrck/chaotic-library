@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { searchGoogleBooks } from '@/services/googleBooks.service';
+import { searchGoogleBooks } from '@/services/googleBooksService';
 import { Book, BookDetails, EBookStatus, BookFormat } from '@/types/books.type';
 import { SortOption } from '@/types/filters.type';
 

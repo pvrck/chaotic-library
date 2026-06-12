@@ -1,0 +1,11 @@
+export const LOGIN = '/login';
+
+export const LIVRES = '/livres';
+export const PROFIL = '/profil';
+export const CHANGELOG = '/changelog';
+
+export const ADMIN = '/admin';
+export const ADMIN_UTILISATEURS = `${ADMIN}/utilisateurs`;
+export const ADMIN_LEVELS = `${ADMIN}/levels`;
+export const ADMIN_CHALLENGE = `${ADMIN}/challenges`;
+export const ADMIN_CHANGELOG = `${ADMIN}/changelog`;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { BookOpen, Lock, Mail, Loader2 } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
+import { Lock, Mail, Loader2 } from 'lucide-react';
+import logo from '@/assets/chaotic-librairy-logo.png';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -39,7 +40,7 @@ export default function Auth() {
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-xl dark:bg-slate-800">
         <div className="text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/30">
-            <BookOpen className="h-6 w-6" />
+            <img src={logo} alt="" aria-hidden className="h-12 w-12" />
           </div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             {isSignUp ? 'Créer un compte' : 'Chaotic Library'}
@@ -66,7 +67,10 @@ export default function Auth() {
 
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="user-email"
+              >
                 Adresse email
               </label>
               <div className="relative">
@@ -74,6 +78,7 @@ export default function Auth() {
                   <Mail className="h-5 w-5" />
                 </div>
                 <input
+                  id="user-email"
                   type="email"
                   required
                   value={email}
@@ -85,7 +90,10 @@ export default function Auth() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="user-password"
+              >
                 Mot de passe
               </label>
               <div className="relative">
@@ -93,6 +101,7 @@ export default function Auth() {
                   <Lock className="h-5 w-5" />
                 </div>
                 <input
+                  id="user-password"
                   type="password"
                   required
                   value={password}

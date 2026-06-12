@@ -121,10 +121,14 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
         </h3>
         <form onSubmit={handleAddChallenge} className="space-y-3 text-xs">
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+              htmlFor="challenge-title"
+            >
               Intitulé du défi
             </label>
             <input
+              id="challenge-title"
               type="text"
               required
               value={newTitle}
@@ -134,10 +138,14 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
             />
           </div>
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+              htmlFor="challenge-desc"
+            >
               Description / Contrainte
             </label>
             <textarea
+              id="challenge-desc"
               required
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
@@ -162,10 +170,14 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
             </div>
             {newType === EChallengeType.Chaos && (
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label
+                  className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                  htmlFor="challenge-duration"
+                >
                   Durée (jours)
                 </label>
                 <input
+                  id="challenge-duration"
                   type="number"
                   value={newDuration}
                   onChange={(e) => setNewDuration(parseInt(e.target.value))}
@@ -176,10 +188,14 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="challenge-bonus-xp"
+              >
                 Gain (XP)
               </label>
               <input
+                id="challenge-bonus-xp"
                 type="number"
                 value={newXpBonus}
                 onChange={(e) => setNewXpBonus(parseInt(e.target.value))}
@@ -187,10 +203,14 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                className="block font-bold text-slate-700 dark:text-slate-300 mb-1"
+                htmlFor="challenge-malus-xp"
+              >
                 Malus (XP)
               </label>
               <input
+                id="challenge-malus-xp"
                 type="number"
                 value={newXpMalus}
                 onChange={(e) => setNewXpMalus(parseInt(e.target.value))}
