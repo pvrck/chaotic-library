@@ -110,11 +110,10 @@ export const BooksPage = () => {
         {/* 📑 SOUS-ONGLETS DE STATUT */}
         <div className="flex gap-1 overflow-x-auto pb-1">
           {(['Tous', ...Object.values(EBookStatus)] as const).map((st) => {
-            // 1. On calcule le compte dynamiquement
+            const allBooks = b.books;
+
             const count =
-              st === 'Tous'
-                ? b.filteredAndSortedBooks.length // Ou b.allBooks.length si tu veux le total réel
-                : b.filteredAndSortedBooks.filter((bk) => bk.status === st).length;
+              st === 'Tous' ? allBooks.length : allBooks.filter((bk) => bk.status === st).length;
 
             return (
               <button

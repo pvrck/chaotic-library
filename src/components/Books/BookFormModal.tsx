@@ -116,6 +116,14 @@ export default function BookFormModal({
             is_lc: formData.is_lc,
             added_at: formData.added_at,
             thumbnail: formData.thumbnail || null,
+            started_at:
+              formData.status === EBookStatus.EnCours && !bookToEdit?.started_at
+                ? new Date().toISOString()
+                : bookToEdit?.started_at,
+            finished_at:
+              formData.status === EBookStatus.Lu && !bookToEdit?.finished_at
+                ? new Date().toISOString()
+                : bookToEdit?.finished_at,
           })
           .eq('id', bookToEdit.id);
 

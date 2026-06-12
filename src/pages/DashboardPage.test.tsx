@@ -12,6 +12,9 @@ vi.mock('@/components/Dashboard/ExperienceBar', () => ({
 vi.mock('@/components/Dashboard/ChallengeBoard', () => ({
   ChallengeBoard: () => <div data-testid="challenge-board" />,
 }));
+vi.mock('@/components/Dashboard/Stats/Stats', () => ({
+  Stats: () => <div data-testid="stats-section" />,
+}));
 
 type UseAuthReturn = ReturnType<typeof useAuth>;
 
@@ -30,11 +33,14 @@ describe('Page - DashboardPage', () => {
 
     render(<DashboardPage />);
 
-    // Utilise l'ID, c'est infaillible !
+    // Ton test existant
     const title = screen.getByTestId('welcome-title');
-
-    // Vérifie le contenu textuel brut
     expect(title.textContent).toMatch(/Léa/i);
+
+    // NOUVEAU : Vérifie que les sections sont bien présentes
+    expect(screen.getByTestId('experience-bar')).toBeDefined();
+    expect(screen.getByTestId('stats-section')).toBeDefined();
+    expect(screen.getByTestId('challenge-board')).toBeDefined();
   });
 
   it('devrait afficher un nom par défaut si aucun profil n’est disponible', () => {
