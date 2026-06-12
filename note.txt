@@ -1,6 +1,0 @@
-# Pour prochaine MEP (v1.0.0)
-
-## Scripts : 
-05_changelog_table.sql
-
-# TODO 
