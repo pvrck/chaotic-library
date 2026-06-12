@@ -3,13 +3,21 @@ import { YearlyChart } from '@/components/Dashboard/Stats/YearlyChart';
 import { useBooks } from '@/hooks/useBooks';
 import { getMonthlySnapshot, getYearlyEvolutionStats } from '@/services/statsService';
 import { motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MonthPopover } from './MonthPopover';
 import { YearPopover } from './YearPopover';
+import { AnnualGoalCard } from '../AnnualGoalCard';
+import { getGoalByYear, saveGoalForYear } from '@/services/goalService';
 
 export const Stats = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+
+  const [goal, setGoal] = useState<number>(5); // Default 5
+  const handleUpdateGoal = async (newGoal: number) => {
+    setGoal(newGoal);
+    await saveGoalForYear(selectedYear, newGoal);
+  };
 
   const currentMonth = new Date().getMonth();
 
@@ -57,8 +65,24 @@ export const Stats = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchGoal = async () => {
+      const data = await getGoalByYear(selectedYear);
+      setGoal(data?.target_count ?? 5);
+    };
+    fetchGoal();
+  }, [selectedYear]);
+
   return (
     <div className="space-y-6">
+      <AnnualGoalCard
+        current={monthlyStats.lus}
+        goal={goal}
+        year={selectedYear}
+        onSave={handleUpdateGoal}
+        isEditable={selectedYear === new Date().getFullYear()}
+      />
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-black text-slate-900">Mon activité de lecture</h2>

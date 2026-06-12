@@ -1,7 +1,7 @@
 import { ChallengeBoard } from '@/components/Dashboard/ChallengeBoard';
 import { ExperienceBar } from '@/components/Dashboard/ExperienceBar';
-import { useAuth } from '@/context/AuthContext';
 import { Stats } from '@/components/Dashboard/Stats/Stats';
+import { useAuth } from '@/context/AuthContext';
 
 export const DashboardPage = () => {
   const { profile } = useAuth();

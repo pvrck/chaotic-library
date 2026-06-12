@@ -45,6 +45,15 @@ vi.mock('@/components/Dashboard/Stats/DistributionSection', () => ({
   DistributionSection: () => <div>Distribution</div>,
 }));
 
+vi.mock('@/services/goalService', () => ({
+  getGoalByYear: vi.fn().mockResolvedValue({ target_count: 10 }),
+  saveGoalForYear: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock('@/components/Dashboard/AnnualGoalCard', () => ({
+  AnnualGoalCard: () => <div data-testid="goal-card">Card Objectif</div>,
+}));
+
 describe('Stats', () => {
   it('affiche les titres principaux', () => {
     render(<Stats />);
@@ -62,5 +71,11 @@ describe('Stats', () => {
     // Vérifie que le titre du mois a changé (juillet = index 6)
     // Note: Selon ton code, il affiche le mois sélectionné + 1 si tu as un décalage
     expect(screen.getByText(/Statistiques pour/i)).toBeDefined();
+  });
+
+  it("affiche la carte d'objectif", async () => {
+    render(<Stats />);
+    const goalCard = await screen.findByTestId('goal-card');
+    expect(goalCard).toBeDefined();
   });
 });
