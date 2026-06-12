@@ -4,7 +4,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN
-    CREATE TYPE book_status AS ENUM ('A lire', 'En cours', 'Terminé');
+    CREATE TYPE book_status AS ENUM ('A lire', 'En cours', 'Lu', 'Abandonné');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN

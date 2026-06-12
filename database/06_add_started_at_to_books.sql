@@ -1,0 +1,2 @@
+ALTER TABLE "books" 
+ADD COLUMN "started_at" TIMESTAMP WITH TIME ZONE;
