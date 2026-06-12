@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import { Lock, Mail, Loader2 } from 'lucide-react';
 import logo from '@/assets/chaotic-librairy-logo.png';
 

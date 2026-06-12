@@ -1,4 +1,4 @@
-import Auth from '@/components/Auth';
+import Auth from '@/components/Auth/Auth';
 import { useAuth } from '@/context/AuthContext';
 
 export const LoginPage = () => {

@@ -8,7 +8,7 @@ const { mockSignInWithPassword, mockSignUp } = vi.hoisted(() => ({
   mockSignUp: vi.fn(),
 }));
 
-vi.mock('../lib/supabaseClient', () => ({
+vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     auth: {
       signInWithPassword: mockSignInWithPassword,

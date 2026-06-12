@@ -8,7 +8,7 @@ vi.mock('@/context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('@/components/Auth', () => ({
+vi.mock('@/components/Auth/Auth', () => ({
   default: () => <div data-testid="auth-component">Composant Auth</div>,
 }));
 
