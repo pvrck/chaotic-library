@@ -109,22 +109,38 @@ export const BooksPage = () => {
 
         {/* 📑 SOUS-ONGLETS DE STATUT */}
         <div className="flex gap-1 overflow-x-auto pb-1">
-          {(['Tous', ...Object.values(EBookStatus)] as const).map((st) => (
-            <button
-              key={st}
-              onClick={() => {
-                b.setStatusFilter(st);
-                b.setCurrentPage(1);
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                b.statusFilter === st
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-100 dark:border-slate-700/40'
-              }`}
-            >
-              {st === EBookStatus.Abandonne ? 'Abandonnés' : st}
-            </button>
-          ))}
+          {(['Tous', ...Object.values(EBookStatus)] as const).map((st) => {
+            // 1. On calcule le compte dynamiquement
+            const count =
+              st === 'Tous'
+                ? b.filteredAndSortedBooks.length // Ou b.allBooks.length si tu veux le total réel
+                : b.filteredAndSortedBooks.filter((bk) => bk.status === st).length;
+
+            return (
+              <button
+                key={st}
+                onClick={() => {
+                  b.setStatusFilter(st);
+                  b.setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-2 ${
+                  b.statusFilter === st
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-100 dark:border-slate-700/40'
+                }`}
+              >
+                {st === EBookStatus.Abandonne ? 'Abandonnés' : st}
+                {/* 2. On affiche le badge de nombre */}
+                <span
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] ${
+                    b.statusFilter === st ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* 📚 LISTE DES LIVRES */}

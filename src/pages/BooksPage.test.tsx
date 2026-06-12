@@ -27,14 +27,29 @@ describe('Page - BooksPage', () => {
     } as UseAuthReturn);
 
     // Mock typé pour useBooks
+    // Dans ton test "affiche le bon nombre de livres dans le badge"
     vi.mocked(useBooks).mockReturnValue({
       loading: false,
-      currentItems: [],
-      // On remplit le minimum requis par l'interface du hook
-      books: [],
-      totalPages: 0,
+      currentItems: [{ id: '1' }, { id: '2' }], // Les éléments à afficher
+      books: [{ id: '1' }, { id: '2' }], // La liste totale
+      filteredAndSortedBooks: [{ id: '1' }, { id: '2' }],
+      statusFilter: 'Tous',
+      setStatusFilter: vi.fn(),
+      sortBy: 'date',
+      setSortBy: vi.fn(),
+      search: '',
+      setSearch: vi.fn(),
+      formatFilter: 'Tous',
+      setFormatFilter: vi.fn(),
+      totalPages: 1,
       currentPage: 1,
+      setCurrentPage: vi.fn(),
       fetchBooks: vi.fn(),
+      handleOpenDetails: vi.fn(),
+      selectedBook: null,
+      setSelectedBook: vi.fn(),
+      bookDetails: null,
+      detailsLoading: false,
     } as unknown as UseBooksReturn);
 
     render(<BooksPage />);
@@ -47,5 +62,36 @@ describe('Page - BooksPage', () => {
 
     const modal = await screen.findByTestId('form-modal');
     expect(modal).toBeInTheDocument();
+  });
+
+  it('affiche le bon nombre de livres dans le badge', () => {
+    vi.mocked(useBooks).mockReturnValue({
+      loading: false,
+      currentItems: [{ id: '1' }, { id: '2' }], // Les éléments à afficher
+      books: [{ id: '1' }, { id: '2' }], // La liste totale
+      filteredAndSortedBooks: [{ id: '1' }, { id: '2' }],
+      statusFilter: 'Tous',
+      setStatusFilter: vi.fn(),
+      sortBy: 'date',
+      setSortBy: vi.fn(),
+      search: '',
+      setSearch: vi.fn(),
+      formatFilter: 'Tous',
+      setFormatFilter: vi.fn(),
+      totalPages: 1,
+      currentPage: 1,
+      setCurrentPage: vi.fn(),
+      fetchBooks: vi.fn(),
+      handleOpenDetails: vi.fn(),
+      selectedBook: null,
+      setSelectedBook: vi.fn(),
+      bookDetails: null,
+      detailsLoading: false,
+    } as unknown as UseBooksReturn);
+
+    render(<BooksPage />);
+
+    // Vérifie que le compteur "2" est présent
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 });
