@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { Level } from '@/types/levels.type';
-// 1. Importe ta fonction utilitaire !
 import { getPlayerLevelInfo } from '@/utils/levelUtils';
 
 export const ExperienceBar = () => {

@@ -23,6 +23,7 @@ export interface Book {
   status: BookStatus;
   format: BookFormat;
   added_at: string;
+  started_at?: string | null;
   finished_at?: string | null;
   saga_name?: string | null;
   saga_volume?: number | null;
