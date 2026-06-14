@@ -16,7 +16,7 @@ export const AdminAchievementsPage = () => {
 
   const fetchAchievements = useCallback(async () => {
     const { data } = await supabase.from('achievements_definitions').select('*');
-    if (data) setAchievements(data);
+    if (data) setAchievements(data as Achievement[]);
   }, []);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export const AdminAchievementsPage = () => {
     const fetchData = async () => {
       const { data } = await supabase.from('achievements_definitions').select('*');
       if (isMounted && data) {
-        setAchievements(data);
+        setAchievements(data as Achievement[]);
       }
     };
 
@@ -38,7 +38,7 @@ export const AdminAchievementsPage = () => {
 
   const handleDelete = async (id: string | null) => {
     if (confirm('Supprimer ce succès ?')) {
-      await supabase.from('achievements_definitions').delete().eq('id', id);
+      await supabase.from('achievements_definitions').delete().eq('id', id!);
       fetchAchievements();
     }
   };

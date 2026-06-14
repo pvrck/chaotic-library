@@ -21,7 +21,12 @@ export const triggerChaosChallenge = async (): Promise<string | null> => {
 
   if (userChallenges && userChallenges.length > 0) {
     const randomSelection = userChallenges[Math.floor(Math.random() * userChallenges.length)];
-    const randomChallengeArray = randomSelection.challenge_pool as ChallengePoolItem[] | null;
+    const rawPool = randomSelection.challenge_pool;
+    const randomChallengeArray: ChallengePoolItem[] = Array.isArray(rawPool)
+      ? (rawPool as ChallengePoolItem[])
+      : rawPool
+        ? [rawPool as ChallengePoolItem]
+        : [];
     const randomChallenge =
       randomChallengeArray && randomChallengeArray.length > 0 ? randomChallengeArray[0] : null;
 

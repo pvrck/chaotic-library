@@ -67,9 +67,10 @@ describe('Page - BooksPage', () => {
   it('affiche le bon nombre de livres dans le badge', () => {
     vi.mocked(useBooks).mockReturnValue({
       loading: false,
-      currentItems: [{ id: '1' }, { id: '2' }], // Les éléments à afficher
-      books: [{ id: '1' }, { id: '2' }], // La liste totale
-      filteredAndSortedBooks: [{ id: '1' }, { id: '2' }],
+      // Créons une liste de 3 livres pour être sûr de tester le chiffre 3
+      books: [{ id: '1' }, { id: '2' }, { id: '3' }],
+      currentItems: [{ id: '1' }, { id: '2' }, { id: '3' }],
+      filteredAndSortedBooks: [{ id: '1' }, { id: '2' }, { id: '3' }],
       statusFilter: 'Tous',
       setStatusFilter: vi.fn(),
       sortBy: 'date',
@@ -91,7 +92,27 @@ describe('Page - BooksPage', () => {
 
     render(<BooksPage />);
 
-    // Vérifie que le compteur "2" est présent
-    expect(screen.getByText('2')).toBeInTheDocument();
+    // On cherche le bouton "Tous" qui contient le badge
+    const allButton = screen.getByRole('button', { name: /tous/i });
+
+    // On cherche le span à l'intérieur de ce bouton spécifique
+    const badge = allButton.querySelector('span:last-child');
+
+    expect(badge?.textContent).toBe('3');
+  });
+
+  it('affiche un message quand la liste est vide', () => {
+    vi.mocked(useBooks).mockReturnValue({
+      loading: false,
+      books: [],
+      currentItems: [], // Vide
+      filteredAndSortedBooks: [],
+      statusFilter: 'Tous',
+      // ... reste des mocks nécessaires (tu peux utiliser un helper pour éviter la répétition)
+    } as unknown as UseBooksReturn);
+
+    render(<BooksPage />);
+
+    expect(screen.getByText(/Aucun livre ne correspond à tes critères/i)).toBeInTheDocument();
   });
 });

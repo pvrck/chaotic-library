@@ -25,15 +25,27 @@ export default function UserList() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // On récupère les profils depuis Supabase
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, avatar_url, xp, created_at');
 
       if (error) throw error;
-      setUsers(data || []);
+
+      if (data) {
+        // On transforme les données brutes pour satisfaire l'interface UserProfile
+        const formattedUsers: UserProfile[] = data.map((user) => ({
+          id: user.id,
+          // Si username est null, on met une chaîne vide ou "Inconnu"
+          username: user.username ?? 'Inconnu',
+          avatar_url: user.avatar_url,
+          xp: user.xp,
+          // On s'assure que created_at est bien une string (avec une date par défaut si vide)
+          created_at: user.created_at ?? new Date().toISOString(),
+        }));
+        setUsers(formattedUsers);
+      }
     } catch (error) {
-      console.error('Erreur lors de la récupération des utilisateurs:', error);
+      console.error('Erreur:', error);
     } finally {
       setLoading(false);
     }

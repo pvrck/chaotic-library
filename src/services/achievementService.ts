@@ -2,12 +2,17 @@ import { supabase } from '@/lib/supabaseClient';
 import { EAchievementConditionType } from '@/types/achievement.type';
 
 export const checkAchievements = async (userId: string | undefined, conditionType: string) => {
-  // Sécurité : ne rien faire si on n'a pas d'ID utilisateur
   if (!userId) return;
 
-  const unlockedIds: string[] = [];
+  // 1. Récupérer les succès déjà débloqués pour cet utilisateur
+  const { data: alreadyUnlocked } = await supabase
+    .from('user_achievements')
+    .select('achievement_id')
+    .eq('user_id', userId);
 
-  // 1. Récupérer les définitions de ce type
+  const unlockedIdsSet = new Set(alreadyUnlocked?.map((a) => a.achievement_id) || []);
+
+  // 2. Récupérer les définitions de ce type
   const { data: definitions } = await supabase
     .from('achievements_definitions')
     .select('*')
@@ -15,7 +20,7 @@ export const checkAchievements = async (userId: string | undefined, conditionTyp
 
   if (!definitions || definitions.length === 0) return;
 
-  // 2. Calculer la progression réelle de l'utilisateur
+  // 3. Calculer la progression réelle
   let userProgress = 0;
 
   if (conditionType === EAchievementConditionType.LivresLus) {
@@ -53,16 +58,22 @@ export const checkAchievements = async (userId: string | undefined, conditionTyp
     userProgress = count || 0;
   }
 
-  // 3. Comparer et débloquer
-  for (const def of definitions) {
-    if (userProgress >= def.threshold) {
-      const { data } = await supabase
-        .from('user_achievements')
-        .insert([{ user_id: userId, achievement_id: def.id }])
-        .select('achievement_id');
+  // 4. Filtrer uniquement ceux qui sont atteints ET non encore possédés
+  const newAchievements = definitions.filter(
+    (def) => userProgress >= def.threshold && !unlockedIdsSet.has(def.id)
+  );
 
-      if (data) unlockedIds.push(def.title);
+  // 5. Insérer les nouveaux succès
+  const unlockedTitles: string[] = [];
+  for (const def of newAchievements) {
+    const { error } = await supabase
+      .from('user_achievements')
+      .insert([{ user_id: userId, achievement_id: def.id }]);
+
+    if (!error) {
+      unlockedTitles.push(def.title);
     }
   }
-  return unlockedIds;
+
+  return unlockedTitles;
 };

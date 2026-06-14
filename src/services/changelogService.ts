@@ -29,7 +29,7 @@ export const updateChangelog = async (
   const { data: updatedLog, error } = await supabase
     .from('changelogs')
     .update(data)
-    .eq('id', id)
+    .eq('id', String(id))
     .select();
 
   if (error) throw new Error(error.message);

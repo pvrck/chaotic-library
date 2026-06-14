@@ -16,8 +16,14 @@ export const AchievementsGrid = ({ userId }: { userId: string | undefined }) => 
         .select('achievement_id')
         .eq('user_id', userId);
 
-      if (defs) setAll(defs);
-      if (userAch) setUnlocked(userAch.map((a) => a.achievement_id));
+      if (defs) setAll(defs as unknown as Achievement[]);
+      if (userAch) {
+        const validIds = userAch
+          .map((a) => a.achievement_id)
+          .filter((id): id is string => id !== null);
+
+        setUnlocked(validIds);
+      }
     };
     fetch();
   }, [userId]);

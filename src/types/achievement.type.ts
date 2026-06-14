@@ -13,6 +13,7 @@ export interface Achievement {
   condition_type: EAchievementConditionType;
   threshold: number;
   xp_reward: number;
+  created_at?: string | null;
 }
 
 export interface AchievementFormData {
