@@ -23,10 +23,10 @@ export const AdministrationChangeLogPage = () => {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Gestion du Changelog</h1>
+      <h2 className="text-sm font-black uppercase text-slate-400">Gestion du Changelog</h2>
 
       {/* Formulaire pour ajouter */}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm">
         <ChangelogForm
           key={editingLog?.id || 'new'}
           initialData={editingLog}

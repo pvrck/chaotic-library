@@ -15,11 +15,15 @@ export const AdminLayout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50 dark:bg-slate-950 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white p-6 flex flex-col h-full shrink-0">
-        <h1 className="text-xl font-bold mb-8 text-indigo-400">Panel Admin</h1>
-        <nav className="space-y-4 flex-grow">
+      <aside className="w-full md:w-64 bg-gray-900 text-white p-4 md:p-6 flex flex-row md:flex-col shrink-0 overflow-x-auto md:h-full">
+        <h1 className="text-xl font-bold mb-0 md:mb-8 text-indigo-400 hidden md:block">
+          Panel Admin
+        </h1>
+
+        {/* Navigation : horizontale sur mobile, verticale sur desktop */}
+        <nav className="flex flex-row md:flex-col gap-2 md:space-y-4 flex-grow overflow-x-auto">
           <NavLink to={route.ADMIN_CHANGELOG} className={getLinkClass}>
             Changelog
           </NavLink>
@@ -34,17 +38,17 @@ export const AdminLayout = () => {
           </NavLink>
         </nav>
 
-        <div className="border-t border-gray-700 pt-4">
-          <Link to="/" className="text-sm text-gray-400 hover:text-white">
-            ← Retour au site
+        {/* Retour site */}
+        <div className="border-l md:border-t border-gray-700 pl-4 md:pl-0 md:pt-4 ml-2 md:ml-0 flex items-center">
+          <Link to="/" className="text-sm text-gray-400 hover:text-white whitespace-nowrap">
+            ← Retour
           </Link>
         </div>
       </aside>
 
       {/* Zone de contenu */}
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
-          {/* L'Outlet rendra ici ta page /admin/changelog */}
           <Outlet />
         </div>
       </main>

@@ -23,7 +23,7 @@ export const ChangelogTable = ({ logs, onAction, onEdit }: ChangelogTableProps) 
   };
 
   return (
-    <table className="w-full bg-white rounded-lg shadow">
+    <table className="w-full bg-white dark:bg-slate-800 rounded-lg shadow">
       <tbody>
         {logs.map((log) => (
           <tr key={log.id} className="border-b">
