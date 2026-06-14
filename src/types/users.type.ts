@@ -4,8 +4,9 @@ export interface Profile {
   username: string | null;
   role: 'admin' | 'user';
   xp: number;
-  updated_at: string;
+  updated_at: string | null;
   avatar_url: string | null;
+  created_at?: string;
 }
 
 export interface UserProfile {

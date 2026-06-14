@@ -58,7 +58,7 @@ export const ChallengeBlock = ({
 
       const expiresAt = new Date();
       if (type === EChallengeType.Chaos) {
-        expiresAt.setDate(expiresAt.getDate() + chosenChallenge.duration_days);
+        expiresAt.setDate(expiresAt.getDate() + chosenChallenge.duration_days!);
       } else {
         // Fin du mois en cours pour le défi mensuel
         expiresAt.setMonth(expiresAt.getMonth() + 1);

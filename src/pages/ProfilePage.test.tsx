@@ -1,14 +1,17 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProfilePage } from './ProfilePage';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
-import { UserProfile } from '@/types/users.type';
 
-vi.mock('@/context/AuthContext', () => ({
-  useAuth: vi.fn(),
+type AuthContextType = ReturnType<typeof useAuth>;
+
+// Mock simple des composants enfants pour éviter les erreurs de rendu
+vi.mock('@/components/Profile/AchievementsGrid', () => ({
+  AchievementsGrid: () => <div data-testid="achievements-grid" />,
 }));
 
+vi.mock('@/context/AuthContext', () => ({ useAuth: vi.fn() }));
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     from: vi.fn(),
@@ -16,51 +19,66 @@ vi.mock('@/lib/supabaseClient', () => ({
   },
 }));
 
-const mockAuth = (profile: Partial<UserProfile>) =>
-  ({
-    profile: profile as UserProfile, // On force le cast ici pour le test
-    refreshProfile: vi.fn(),
-  }) as unknown as ReturnType<typeof useAuth>;
-
 describe('Page - ProfilePage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('devrait mettre à jour le profil avec succès', async () => {
-    vi.mocked(useAuth).mockReturnValue(
-      mockAuth({
+    vi.mocked(useAuth).mockReturnValue({
+      profile: {
         id: '1',
         username: 'Léa',
         xp: 500,
-        avatar_url: null,
-        created_at: '2026-05-15T10:00:00.000Z',
-      })
-    );
+        avatar_url: '📖',
+        email: 'test@test.com',
+        role: 'user',
+        updated_at: null,
+      },
+      refreshProfile: vi.fn(),
+    } as unknown as AuthContextType);
 
+    // Mock chaîné de Supabase
+    const mockUpdate = vi.fn().mockReturnThis();
+    const mockEq = vi.fn().mockResolvedValue({ error: null });
     vi.mocked(supabase.from).mockReturnValue({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    } as unknown as ReturnType<typeof supabase.from>);
+      update: mockUpdate,
+      eq: mockEq,
+    } as unknown);
 
     render(<ProfilePage />);
 
+    // Basculer vers l'onglet Profil
+    fireEvent.click(screen.getByRole('button', { name: /Mon Profil/i }));
+
     const input = screen.getByLabelText(/Nom dans la guilde/i);
     fireEvent.change(input, { target: { value: 'LéaNouvelle' } });
-    fireEvent.click(screen.getByText(/Enregistrer les changements/i));
+
+    const saveBtn = screen.getByRole('button', { name: /Enregistrer les changements/i });
+    await act(async () => {
+      fireEvent.click(saveBtn);
+    });
 
     await waitFor(() => {
       expect(screen.getByText(/Profil mis à jour avec succès/i)).toBeInTheDocument();
     });
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ username: 'LéaNouvelle' }));
   });
 
-  it('devrait afficher une erreur si les mots de passe ne correspondent pas', async () => {
-    vi.mocked(useAuth).mockReturnValue(mockAuth({ id: '1' }));
+  it('devrait valider la correspondance des mots de passe', async () => {
+    vi.mocked(useAuth).mockReturnValue({ profile: { id: '1' } } as unknown as AuthContextType);
     render(<ProfilePage />);
 
+    fireEvent.click(screen.getByRole('button', { name: /Mon Profil/i }));
+
     fireEvent.change(screen.getByLabelText(/Nouveau mot de passe/i), {
-      target: { value: 'password123' },
+      target: { value: 'pass1' },
     });
     fireEvent.change(screen.getByLabelText(/Confirmer le mot de passe/i), {
-      target: { value: 'wrongpassword' },
+      target: { value: 'pass2' },
     });
-    fireEvent.click(screen.getByText(/Modifier le mot de passe/i));
+
+    fireEvent.click(screen.getByRole('button', { name: /Modifier le mot de passe/i }));
 
     expect(screen.getByText(/Les mots de passe ne correspondent pas/i)).toBeInTheDocument();
   });

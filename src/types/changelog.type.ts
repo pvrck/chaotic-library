@@ -4,7 +4,7 @@ export interface Changelog {
   content: string;
   version: string;
   created_at: string;
-  is_published: boolean;
+  is_published: boolean | null;
 }
 
 export interface ChangelogItemProps {

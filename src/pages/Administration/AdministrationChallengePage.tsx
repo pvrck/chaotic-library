@@ -21,7 +21,7 @@ export const AdministrationChallengePage = () => {
           .order('created_at', { ascending: false });
 
         if (isMounted) {
-          setChallenges(chalData || []);
+          setChallenges((chalData as ChallengePoolItem[]) || []);
           setLoading(false);
         }
       } catch (err) {

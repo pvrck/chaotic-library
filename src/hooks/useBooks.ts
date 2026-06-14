@@ -23,7 +23,7 @@ export const useBooks = () => {
     try {
       const { data, error } = await supabase.from('books').select('*');
       if (error) throw error;
-      setBooks(data || []);
+      setBooks((data as Book[]) || []);
     } catch (error) {
       console.error(error);
     } finally {
@@ -41,7 +41,7 @@ export const useBooks = () => {
 
         // On vérifie que le composant est toujours affiché avant de changer l'état
         if (isMounted) {
-          setBooks(data || []);
+          setBooks((data as Book[]) || []);
         }
       } catch (error) {
         console.error(error);

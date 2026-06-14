@@ -16,10 +16,10 @@ export interface ChallengePoolItem {
   title: string;
   description: string | null;
   type: EChallengeType;
-  duration_days: number;
+  duration_days?: number | null;
   xp_bonus: number;
   xp_malus: number;
-  created_at: string;
+  created_at?: string | null;
   created_by?: string | null;
 }
 
@@ -27,10 +27,9 @@ export interface UserChallenge {
   id: string;
   user_id: string;
   challenge_id: string;
-  status: ChallengeStatus;
-  activated_at: string;
+  status: EChallengeStatus;
+  activated_at: string | null;
   expires_at: string | null;
   completed_at: string | null;
-  created_at: string;
-  challenge_pool?: ChallengePoolItem;
+  challenge_pool: ChallengePoolItem;
 }
