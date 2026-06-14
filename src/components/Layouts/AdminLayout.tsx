@@ -36,6 +36,9 @@ export const AdminLayout = () => {
           <NavLink to={route.ADMIN_UTILISATEURS} className={getLinkClass}>
             Utilisateurs
           </NavLink>
+          <NavLink to={route.ADMIN_SUCCES} className={getLinkClass}>
+            Succès
+          </NavLink>
         </nav>
 
         {/* Retour site */}

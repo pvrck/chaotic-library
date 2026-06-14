@@ -12,6 +12,7 @@ import {
 } from '@/services/changelogService';
 import { ChangelogModal } from '@/components/Changelog/ChangelogModal';
 import { Changelog } from '@/types/changelog.type';
+import { Toaster } from 'sonner';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -166,6 +167,7 @@ export default function Layout() {
       </main>
 
       {modalChangelog && <ChangelogModal changelog={modalChangelog} onClose={handleClose} />}
+      <Toaster position="top-right" richColors />
     </div>
   );
 }

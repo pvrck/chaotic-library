@@ -16,6 +16,7 @@ import { AdministrationLevelsPage } from './pages/Administration/AdministrationL
 import { AdministrationUsersPage } from './pages/Administration/AdministrationUsersPage';
 import { AdminRouteGuard } from './components/Auth/AdminRouteGuard';
 import { ChangelogPage } from './pages/ChangelogPage';
+import { AdminAchievementsPage } from './pages/Administration/AdminAchievementsPage';
 
 export default function App() {
   const { session, loading } = useAuth();
@@ -49,6 +50,7 @@ export default function App() {
             <Route path={route.ADMIN_CHANGELOG} element={<AdministrationChangeLogPage />} />
             <Route path={route.ADMIN_LEVELS} element={<AdministrationLevelsPage />} />
             <Route path={route.ADMIN_UTILISATEURS} element={<AdministrationUsersPage />} />
+            <Route path={route.ADMIN_SUCCES} element={<AdminAchievementsPage />} />
           </Route>
         </Route>
 

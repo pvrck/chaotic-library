@@ -9,3 +9,4 @@ export const ADMIN_UTILISATEURS = `${ADMIN}/utilisateurs`;
 export const ADMIN_LEVELS = `${ADMIN}/levels`;
 export const ADMIN_CHALLENGE = `${ADMIN}/challenges`;
 export const ADMIN_CHANGELOG = `${ADMIN}/changelog`;
+export const ADMIN_SUCCES = `${ADMIN}/succes`;

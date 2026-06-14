@@ -11,6 +11,9 @@ import { BookItem } from '@/components/Books/BookItem';
 import { BookPagination } from '@/components/Books/BookPagination';
 import { BookDetailsModal } from '@/components/Books/BookDetailsModal';
 import BookFormModal from '@/components/Books/BookFormModal';
+import { checkAchievements } from '@/services/achievementService';
+import { EAchievementConditionType } from '@/types/achievement.type';
+import { toast } from 'sonner';
 
 export const BooksPage = () => {
   const { session, refreshProfile } = useAuth();
@@ -38,6 +41,39 @@ export const BooksPage = () => {
       // 🏆 Gestion de l'XP
       const targetBook = b.books.find((book) => book.id === id);
       await handleXpGain(nextStatus, targetBook);
+
+      // 🚀 Vérification des succès (si le livre est terminé)
+      if (nextStatus === EBookStatus.Lu) {
+        const promises = [
+          checkAchievements(session?.user.id, EAchievementConditionType.LivresLus),
+          checkAchievements(session?.user.id, EAchievementConditionType.LivresAnnee),
+        ];
+
+        if (targetBook?.saga_name) {
+          promises.push(checkAchievements(session?.user.id, EAchievementConditionType.SagaAvancee));
+        }
+
+        if (targetBook?.is_lc) {
+          promises.push(
+            checkAchievements(session?.user.id, EAchievementConditionType.ParticipationLc)
+          );
+        }
+
+        // On attend que tout soit fini en une seule fois
+        const newAchievements = await Promise.all(promises);
+
+        if (newAchievements.length > 0) {
+          if (newAchievements.length === 1) {
+            toast.success(`Bravo ! Succès débloqué : ${newAchievements[0]}`);
+          } else {
+            // Si plusieurs, on fait un seul toast avec une liste
+            toast.success('Félicitations, vous avez débloqué plusieurs succès !', {
+              description: newAchievements.join(' • '), // Affiche les titres séparés par un point
+              duration: 5000,
+            });
+          }
+        }
+      }
 
       b.fetchBooks();
       if (session?.user) refreshProfile();
