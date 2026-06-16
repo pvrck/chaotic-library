@@ -202,16 +202,17 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null;
+          created_at: string | null;
           email: string;
           id: string;
           role: Database['public']['Enums']['app_role'];
           updated_at: string | null;
           username: string | null;
           xp: number;
-          created_at?: string;
         };
         Insert: {
           avatar_url?: string | null;
+          created_at?: string | null;
           email: string;
           id: string;
           role?: Database['public']['Enums']['app_role'];
@@ -221,6 +222,7 @@ export type Database = {
         };
         Update: {
           avatar_url?: string | null;
+          created_at?: string | null;
           email?: string;
           id?: string;
           role?: Database['public']['Enums']['app_role'];
@@ -352,12 +354,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      xp_logs: {
+        Row: {
+          amount: number;
+          created_at: string;
+          id: string;
+          reason: string;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          id?: string;
+          reason: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          id?: string;
+          reason?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      update_xp_with_reason: {
+        Args: { log_reason: string; new_xp: number; target_user_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role: 'user' | 'admin';

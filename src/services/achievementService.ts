@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { EAchievementConditionType } from '@/types/achievement.type';
+import { updateXpWithReason } from '@/utils/xpUtils';
 
 export const checkAchievements = async (userId: string | undefined, conditionType: string) => {
   if (!userId) return;
@@ -63,16 +64,33 @@ export const checkAchievements = async (userId: string | undefined, conditionTyp
     (def) => userProgress >= def.threshold && !unlockedIdsSet.has(def.id)
   );
 
-  // 5. Insérer les nouveaux succès
+  if (newAchievements.length === 0) return []; // Retourne un tableau vide au lieu de rien
+
+  // 5. Récupérer l'XP actuel du profil
+  const { data: profile } = await supabase.from('profiles').select('xp').eq('id', userId).single();
+
+  let totalXpGained = 0;
   const unlockedTitles: string[] = [];
+
   for (const def of newAchievements) {
+    // Insérer le succès
     const { error } = await supabase
       .from('user_achievements')
       .insert([{ user_id: userId, achievement_id: def.id }]);
 
     if (!error) {
       unlockedTitles.push(def.title);
+      totalXpGained += def.xp_reward || 0; // Ajoute l'XP définie dans ton succès
     }
+  }
+
+  // 6. Si on a gagné de l'XP, on met à jour le profil
+  if (totalXpGained > 0 && profile) {
+    await updateXpWithReason(
+      userId,
+      profile.xp + totalXpGained,
+      `Succès débloqué : ${unlockedTitles.join(', ')}`
+    );
   }
 
   return unlockedTitles;

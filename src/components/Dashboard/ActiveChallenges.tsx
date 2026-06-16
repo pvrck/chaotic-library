@@ -2,6 +2,7 @@ import { useAuth } from '@/context/AuthContext';
 import { EChallengeStatus, UserChallenge } from '@/types/challenges.type';
 import { supabase } from '@/lib/supabaseClient';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { updateXpWithReason } from '@/utils/xpUtils';
 
 interface ActiveChallengesProps {
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
@@ -34,10 +35,11 @@ export const ActiveChallenges = ({
 
       if (challengeError) throw challengeError;
 
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ xp: newXp })
-        .eq('id', profile.id);
+      const reason = isSuccess
+        ? `Défi réussi : ${challenge.title}`
+        : `Défi échoué : ${challenge.title}`;
+
+      const { error: profileError } = await updateXpWithReason(profile.id, newXp, reason);
 
       if (profileError) throw profileError;
 

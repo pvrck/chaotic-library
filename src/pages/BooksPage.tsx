@@ -59,16 +59,21 @@ export const BooksPage = () => {
           );
         }
 
-        // On attend que tout soit fini en une seule fois
-        const newAchievements = await Promise.all(promises);
+        // 1. On attend tous les résultats
+        const results = await Promise.all(promises);
 
-        if (newAchievements.length > 0) {
-          if (newAchievements.length === 1) {
-            toast.success(`Bravo ! Succès débloqué : ${newAchievements[0]}`);
+        // 2. On aplatit le tableau et on filtre pour ne garder que les titres trouvés
+        const unlockedTitles = results
+          .flat()
+          .filter((title) => title !== undefined && title !== null);
+
+        // 3. On ne fait quelque chose QUE s'il y a des titres réellement débloqués
+        if (unlockedTitles.length > 0) {
+          if (unlockedTitles.length === 1) {
+            toast.success(`Bravo ! Succès débloqué : ${unlockedTitles[0]}`);
           } else {
-            // Si plusieurs, on fait un seul toast avec une liste
             toast.success('Félicitations, vous avez débloqué plusieurs succès !', {
-              description: newAchievements.join(' • '), // Affiche les titres séparés par un point
+              description: unlockedTitles.join(' • '),
               duration: 5000,
             });
           }
