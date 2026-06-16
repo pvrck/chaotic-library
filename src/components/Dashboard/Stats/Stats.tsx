@@ -45,11 +45,11 @@ export const Stats = () => {
   }, [yearlyData, currentMonth]);
 
   const statsConfig = [
-    { label: 'Total Bibliothèque', key: 'total', color: 'text-slate-900', bg: 'bg-slate-200' },
-    { label: 'Livres Lus', key: 'lus', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Dans la PAL', key: 'pal', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Abandonnés', key: 'abandonnes', color: 'text-rose-600', bg: 'bg-rose-50' },
-    { label: 'Ajoutés ce mois', key: 'ajoutesCeMois', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Total Bibliothèque', key: 'total', color: 'text-slate-900', bg: 'bg-slate-100' },
+    { label: 'Livres Lus', key: 'lus', color: 'text-emerald-600', bg: 'bg-emerald-100' },
+    { label: 'Dans la PAL', key: 'pal', color: 'text-indigo-600', bg: 'bg-indigo-100' },
+    { label: 'Abandonnés', key: 'abandonnes', color: 'text-rose-600', bg: 'bg-rose-100' },
+    { label: 'Ajoutés ce mois', key: 'ajoutesCeMois', color: 'text-amber-600', bg: 'bg-amber-100' },
   ];
 
   const handleYearChange = (newYear: number) => {
@@ -85,7 +85,9 @@ export const Stats = () => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-900">Mon activité de lecture</h2>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-indigo-400">
+            Mon activité de lecture
+          </h2>
           <p className="text-sm text-slate-500">
             Vue d'ensemble et statistiques de votre bibliothèque
           </p>

@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { Book, EBookStatus } from '@/types/books.type';
 import { ChallengePoolItem } from '@/types/challenges.type';
+import { updateXpWithReason } from '@/utils/xpUtils';
 
 /**
  * Déclenche un défi du chaos aléatoire en BDD si disponible
@@ -57,23 +58,40 @@ export const triggerChaosChallenge = async (): Promise<string | null> => {
  */
 export const handleXpGain = async (nextStatus: EBookStatus, targetBook?: Book) => {
   let xp = 0;
-  if (nextStatus === EBookStatus.EnCours) xp = 5;
-  else if (nextStatus === EBookStatus.Lu) xp = 120;
-  else if (nextStatus === EBookStatus.Abandonne) xp = 10;
+  let reason = '';
 
-  if (nextStatus === EBookStatus.Lu && targetBook?.saga_name) xp += 30;
+  // 1. Calcul de l'XP et définition de la raison
+  switch (nextStatus) {
+    case EBookStatus.EnCours:
+      xp = 5;
+      reason = `Début de lecture | ${targetBook?.title}`;
+      break;
+    case EBookStatus.Lu:
+      xp = 120;
+      reason = `Livre terminé | ${targetBook?.title}`;
+      if (targetBook?.saga_name) {
+        xp += 30;
+        reason += ' (Bonus Saga)';
+      }
+      break;
+    case EBookStatus.Abandonne:
+      xp = 10;
+      reason = `Livre abandonné | ${targetBook?.title}`;
+      break;
+  }
 
   if (xp <= 0) return;
 
+  // 2. Récupération de l'utilisateur
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return;
 
+  // 3. Récupération de l'XP actuel
   const { data: prof } = await supabase.from('profiles').select('xp').eq('id', user.id).single();
 
-  await supabase
-    .from('profiles')
-    .update({ xp: (prof?.xp || 0) + xp })
-    .eq('id', user.id);
+  const currentXp = prof?.xp || 0;
+
+  await updateXpWithReason(user.id, currentXp + xp, reason);
 };

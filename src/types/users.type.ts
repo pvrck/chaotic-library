@@ -6,7 +6,7 @@ export interface Profile {
   xp: number;
   updated_at: string | null;
   avatar_url: string | null;
-  created_at?: string;
+  created_at?: string | null;
 }
 
 export interface UserProfile {

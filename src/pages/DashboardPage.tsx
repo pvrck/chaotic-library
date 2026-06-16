@@ -1,6 +1,7 @@
 import { ChallengeBoard } from '@/components/Dashboard/ChallengeBoard';
 import { ExperienceBar } from '@/components/Dashboard/ExperienceBar';
 import { Stats } from '@/components/Dashboard/Stats/Stats';
+import { XpHistoryFeed } from '@/components/Dashboard/XpHistoryFeed';
 import { useAuth } from '@/context/AuthContext';
 
 export const DashboardPage = () => {
@@ -26,6 +27,7 @@ export const DashboardPage = () => {
         <ExperienceBar />
         <Stats />
         <ChallengeBoard />
+        <XpHistoryFeed />
       </div>
     </div>
   );

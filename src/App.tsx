@@ -17,6 +17,7 @@ import { AdministrationUsersPage } from './pages/Administration/AdministrationUs
 import { AdminRouteGuard } from './components/Auth/AdminRouteGuard';
 import { ChangelogPage } from './pages/ChangelogPage';
 import { AdminAchievementsPage } from './pages/Administration/AdminAchievementsPage';
+import { XpHistoryPage } from './pages/XpHistoryPage';
 
 export default function App() {
   const { session, loading } = useAuth();
@@ -42,6 +43,7 @@ export default function App() {
           <Route path={route.LIVRES} element={<BooksPage />} />
           <Route path={route.PROFIL} element={<ProfilePage />} />
           <Route path={route.CHANGELOG} element={<ChangelogPage />} />
+          <Route path={route.HISTORIC_XP} element={<XpHistoryPage />} />
         </Route>
 
         <Route element={<AdminRouteGuard />}>
