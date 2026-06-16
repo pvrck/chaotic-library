@@ -1,7 +1,12 @@
+vi.mock('@/utils/xpUtils', () => ({
+  updateXpWithReason: vi.fn().mockResolvedValue({ error: null }),
+}));
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ActiveChallenges } from './ActiveChallenges';
 import { EChallengeType, UserChallenge } from '@/types/challenges.type';
+import { updateXpWithReason } from '@/utils/xpUtils';
 
 // 🔮 1. MOCK DE SUPABASE (Simule les requêtes .update().eq())
 const mockUpdate = vi.fn(() => ({
@@ -105,11 +110,14 @@ describe('Component - ActiveChallenges', () => {
 
     // Attente des résolutions de promesses
     await waitFor(() => {
-      // Supabase a été mis à jour deux fois (user_challenges + profiles)
-      expect(mockUpdate).toHaveBeenCalledTimes(2);
-      // Le profil de l'utilisateur a été rafraîchi
+      // Supabase a été mis à jour 1 fois (pour le challenge)
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
+
+      // La fonction XP a été appelée 1 fois
+      expect(updateXpWithReason).toHaveBeenCalledTimes(1);
+
+      // Le profil a été rafraîchi
       expect(mockRefreshProfile).toHaveBeenCalled();
-      // La commande de rafraîchissement du dashboard a été lancée
       expect(mockSetRefreshTrigger).toHaveBeenCalled();
     });
   });

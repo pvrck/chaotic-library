@@ -1,8 +1,9 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { triggerChaosChallenge, handleXpGain } from './chaosService';
 import { supabase } from '@/lib/supabaseClient';
-import { EBookStatus } from '@/types/books.type';
+import { Book, EBookStatus } from '@/types/books.type';
 import { User, UserResponse } from '@supabase/supabase-js';
+import { updateXpWithReason } from '@/utils/xpUtils';
 
 // Mock de Supabase
 vi.mock('@/lib/supabaseClient', () => ({
@@ -10,6 +11,10 @@ vi.mock('@/lib/supabaseClient', () => ({
     auth: { getUser: vi.fn() },
     from: vi.fn(),
   },
+}));
+
+vi.mock('@/utils/xpUtils', () => ({
+  updateXpWithReason: vi.fn().mockResolvedValue({ error: null }),
 }));
 
 describe('ChaosServices', () => {
@@ -73,32 +78,31 @@ describe('ChaosServices', () => {
   });
 
   describe('handleXpGain', () => {
-    it('devrait mettre à jour l’XP dans le profil', async () => {
+    it('devrait calculer correctement l’XP pour un livre lu', async () => {
+      // Mock de l'utilisateur
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: { id: '1' } as User },
+        data: { user: { id: 'user_1' } as User },
         error: null,
       } as UserResponse);
 
-      // 1. Création d'un mock qui retourne toujours 'this' (lui-même)
-      const mockFrom = {
+      type SupabaseFrom = typeof supabase.from;
+
+      // Mock de Supabase pour le SELECT de l'XP actuel
+      const chain = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(), // Retourne le mock pour permettre .eq()
         single: vi.fn().mockResolvedValue({ data: { xp: 100 }, error: null }),
       };
+      vi.mocked(supabase.from).mockReturnValue(chain as unknown as ReturnType<SupabaseFrom>);
 
-      // 2. On injecte le mock
-      vi.mocked(supabase.from).mockReturnValue(
-        mockFrom as unknown as ReturnType<typeof supabase.from>
+      await handleXpGain(EBookStatus.Lu, { title: 'Dune' } as Book);
+
+      // On vérifie que c'est l'utilitaire qui est appelé avec le calcul (100 + 120 = 220)
+      expect(updateXpWithReason).toHaveBeenCalledWith(
+        'user_1',
+        220,
+        expect.stringContaining('Livre terminé')
       );
-
-      await handleXpGain(EBookStatus.Lu);
-
-      // 3. Vérification des appels
-      // Ici on vérifie que .update a été appelé avec les données,
-      // puis .eq a été appelé pour cibler le user
-      expect(mockFrom.update).toHaveBeenCalledWith({ xp: 220 });
-      expect(mockFrom.eq).toHaveBeenCalledWith('id', '1');
     });
   });
 });
