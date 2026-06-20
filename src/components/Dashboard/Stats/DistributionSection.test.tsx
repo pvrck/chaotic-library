@@ -29,6 +29,7 @@ describe('DistributionSection', () => {
       saga_volume: 1,
       added_at: '2026-05-15T10:00:00.000Z',
       thumbnail: 'https://images.com/passeuse.jpg',
+      page_count: 250,
     },
   ];
 

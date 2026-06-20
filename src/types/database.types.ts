@@ -47,6 +47,7 @@ export type Database = {
           id: string;
           is_lc: boolean;
           isbn: string | null;
+          page_count: number | null;
           saga_name: string | null;
           saga_volume: number | null;
           started_at: string | null;
@@ -63,6 +64,7 @@ export type Database = {
           id?: string;
           is_lc?: boolean;
           isbn?: string | null;
+          page_count?: number | null;
           saga_name?: string | null;
           saga_volume?: number | null;
           started_at?: string | null;
@@ -79,6 +81,7 @@ export type Database = {
           id?: string;
           is_lc?: boolean;
           isbn?: string | null;
+          page_count?: number | null;
           saga_name?: string | null;
           saga_volume?: number | null;
           started_at?: string | null;
@@ -91,6 +94,7 @@ export type Database = {
       };
       challenge_pool: {
         Row: {
+          condition: Json | null;
           created_at: string | null;
           created_by: string | null;
           description: string | null;
@@ -102,6 +106,7 @@ export type Database = {
           xp_malus: number;
         };
         Insert: {
+          condition?: Json | null;
           created_at?: string | null;
           created_by?: string | null;
           description?: string | null;
@@ -113,6 +118,7 @@ export type Database = {
           xp_malus?: number;
         };
         Update: {
+          condition?: Json | null;
           created_at?: string | null;
           created_by?: string | null;
           description?: string | null;
@@ -383,6 +389,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      reset_monthly_challenges: { Args: never; Returns: undefined };
       update_xp_with_reason: {
         Args: { log_reason: string; new_xp: number; target_user_id: string };
         Returns: undefined;
@@ -392,7 +399,7 @@ export type Database = {
       app_role: 'user' | 'admin';
       book_format: 'Papier' | 'Numérique' | 'Audio' | 'Kindle';
       book_status: 'A lire' | 'En cours' | 'Lu' | 'Abandonné';
-      challenge_status: 'en_cours' | 'reussi' | 'echoue';
+      challenge_status: 'en_cours' | 'reussi' | 'echoue' | 'expire';
       status: 'en_cours' | 'reussi' | 'echoue';
     };
     CompositeTypes: {
@@ -522,7 +529,7 @@ export const Constants = {
       app_role: ['user', 'admin'],
       book_format: ['Papier', 'Numérique', 'Audio', 'Kindle'],
       book_status: ['A lire', 'En cours', 'Lu', 'Abandonné'],
-      challenge_status: ['en_cours', 'reussi', 'echoue'],
+      challenge_status: ['en_cours', 'reussi', 'echoue', 'expire'],
       status: ['en_cours', 'reussi', 'echoue'],
     },
   },

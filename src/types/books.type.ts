@@ -30,6 +30,7 @@ export interface Book {
   is_lc: boolean;
   isbn?: string | null;
   thumbnail?: string | null;
+  page_count: number | null;
 }
 
 export interface BookDetails {

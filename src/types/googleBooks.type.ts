@@ -78,4 +78,5 @@ export interface GoogleBookSuggestion {
   author: string;
   isbn: string | null;
   thumbnail: string | null;
+  page_count: number | null;
 }

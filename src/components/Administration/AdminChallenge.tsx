@@ -1,8 +1,15 @@
-import { EChallengeType } from '@/types/challenges.type';
-import { useState } from 'react';
-import { ChallengePoolItem } from '@/types/challenges.type';
 import { supabase } from '@/lib/supabaseClient';
+import {
+  ChallengeCondition,
+  ChallengePoolItem,
+  EChallengeType,
+  EConditionType,
+  EOperator,
+} from '@/types/challenges.type';
+import { Json } from '@/types/database.types';
 import { Check, Edit2, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
+import AdminChallengeConditionForm from './AdminChallengeConditionForm';
 
 interface AdminChallengeProps {
   challenges: ChallengePoolItem[];
@@ -19,6 +26,11 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
   const [newXpBonus, setNewXpBonus] = useState(100);
   const [newXpMalus, setNewXpMalus] = useState(20);
   const [newDuration, setNewDuration] = useState(7);
+  const [newConditionType, setNewConditionType] = useState<EConditionType>(
+    EConditionType.BooksRead
+  );
+  const [newThreshold, setNewThreshold] = useState(1);
+  const [newOperator, setNewOperator] = useState<EOperator>(EOperator.Gte);
 
   // États pour l'édition d'un défi
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -27,6 +39,7 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
   const [editXpBonus, setEditXpBonus] = useState(0);
   const [editXpMalus, setEditXpMalus] = useState(0);
   const [editDuration, setEditDuration] = useState(0);
+  const [editCondition, setEditCondition] = useState<ChallengeCondition | null>(null);
 
   // Soumission d'un nouveau défi
   const handleAddChallenge = async (e: React.FormEvent) => {
@@ -40,6 +53,11 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
           xp_bonus: newXpBonus,
           xp_malus: newXpMalus,
           duration_days: newType === EChallengeType.Mensuel ? 30 : newDuration,
+          condition: {
+            type: newConditionType,
+            operator: newOperator,
+            threshold: newThreshold,
+          },
         },
       ]);
       if (insertError) throw insertError;
@@ -61,6 +79,13 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
     setEditXpBonus(challenge.xp_bonus);
     setEditXpMalus(challenge.xp_malus);
     setEditDuration(challenge.duration_days || 7);
+    setEditCondition(
+      challenge.condition || {
+        type: EConditionType.BooksRead,
+        operator: EOperator.Eq,
+        threshold: 1,
+      }
+    );
   };
 
   // 🔥 ACTION : Sauvegarder les modifications d'un défi
@@ -77,6 +102,7 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
           xp_bonus: editXpBonus,
           xp_malus: editXpMalus,
           duration_days: originalChallenge.type === EChallengeType.Mensuel ? null : editDuration,
+          condition: editCondition as unknown as Json,
         })
         .eq('id', id);
 
@@ -154,6 +180,16 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
+          <AdminChallengeConditionForm
+            type={newConditionType}
+            operator={newOperator}
+            threshold={newThreshold}
+            onChange={(updates) => {
+              if (updates.type) setNewConditionType(updates.type);
+              if (updates.operator) setNewOperator(updates.operator);
+              if (updates.threshold !== undefined) setNewThreshold(updates.threshold);
+            }}
+          />
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -288,6 +324,17 @@ export const AdminChallenge = ({ challenges, setRefreshTrigger }: AdminChallenge
                       rows={2}
                       className="w-full px-2 py-1 bg-white dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300"
                     />
+                    {editCondition && (
+                      <AdminChallengeConditionForm
+                        type={editCondition.type}
+                        operator={editCondition.operator}
+                        threshold={editCondition.threshold}
+                        onChange={(updates) =>
+                          setEditCondition((prev) => (prev ? { ...prev, ...updates } : null))
+                        }
+                      />
+                    )}
+                    )
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex gap-3 items-center">
                         <span className="text-emerald-600 font-bold">

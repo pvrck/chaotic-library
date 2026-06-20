@@ -24,6 +24,7 @@ const emptyBook: Book = {
   is_lc: false,
   added_at: new Date().toISOString(),
   thumbnail: null,
+  page_count: null,
 };
 
 export default function BookFormModal({
@@ -71,6 +72,7 @@ export default function BookFormModal({
             item.volumeInfo.imageLinks?.smallThumbnail ||
             item.volumeInfo.imageLinks?.thumbnail ||
             null,
+          page_count: item.volumeInfo.pageCount || null,
         }));
         setSuggestions(formatted);
       } else {
@@ -88,9 +90,10 @@ export default function BookFormModal({
     setFormData((prev) => ({
       ...prev,
       title: sug.title,
-      author: sug.author, // Plus de faute de frappe, les auteurs multiples descendent ici
+      author: sug.author,
       isbn: sug.isbn || prev.isbn,
       thumbnail: sug.thumbnail || prev.thumbnail,
+      page_count: sug.page_count || prev.page_count,
     }));
     setSuggestions([]);
   };
@@ -124,6 +127,7 @@ export default function BookFormModal({
               formData.status === EBookStatus.Lu && !bookToEdit?.finished_at
                 ? new Date().toISOString()
                 : bookToEdit?.finished_at,
+            page_count: formData.page_count || null,
           })
           .eq('id', bookToEdit.id);
 
@@ -142,6 +146,7 @@ export default function BookFormModal({
             added_at: formData.added_at,
             user_id: profile.id,
             thumbnail: formData.thumbnail || null,
+            page_count: formData.page_count || null,
           },
         ]);
 
@@ -330,6 +335,21 @@ export default function BookFormModal({
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Nombre de pages
+            </label>
+            <input
+              type="number"
+              value={formData.page_count || ''}
+              onChange={(e) =>
+                setFormData({ ...formData, page_count: parseInt(e.target.value) || null })
+              }
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border-none text-slate-800 dark:text-white"
+              placeholder="Ex: 350"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-2">

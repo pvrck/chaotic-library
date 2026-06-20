@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { EChallengeType } from '@/types/challenges.type';
 import { ActiveChallenges } from './ActiveChallenges';
 import { ChallengeBlock } from './ChallengeBlock';
+import ChallengeDashboard from '../Challenge/ChallengeDashboard';
 
 export const ChallengeBoard = () => {
   const { profile } = useAuth();
@@ -55,6 +56,14 @@ export const ChallengeBoard = () => {
 
   return (
     <>
+      {profile?.id && <ChallengeDashboard userId={profile.id} />}
+
+      <ActiveChallenges
+        setRefreshTrigger={setRefreshTrigger}
+        loading={loading}
+        activeChallenges={activeChallenges}
+      />
+
       {/* 🎲 ACTIONS DE JEU */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Lancer Mensuel */}
@@ -71,12 +80,6 @@ export const ChallengeBoard = () => {
           activeChallenges={activeChallenges}
         />
       </div>
-
-      <ActiveChallenges
-        setRefreshTrigger={setRefreshTrigger}
-        loading={loading}
-        activeChallenges={activeChallenges}
-      />
     </>
   );
 };
