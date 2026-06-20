@@ -4,6 +4,7 @@ export enum EAchievementConditionType {
   ParticipationLc = 'participation_lc',
   SagaAvancee = 'saga_avancee',
   SagaTerminee = 'saga_terminee',
+  LivresObjectif = 'livres_objectif',
 }
 
 export interface Achievement {

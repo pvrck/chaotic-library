@@ -6,4 +6,5 @@ export const CONDITIONS = [
   { value: EAchievementConditionType.SagaAvancee, label: 'Livres de saga avancée' },
   { value: EAchievementConditionType.LivresAnnee, label: 'Livres lus cette année' },
   { value: EAchievementConditionType.ParticipationLc, label: 'Participation LC' },
+  { value: EAchievementConditionType.LivresObjectif, label: 'Objectif de lecture' },
 ];
