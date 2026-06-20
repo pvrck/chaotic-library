@@ -8,7 +8,7 @@ export const XpHistoryFeed = () => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-bold text-slate-500">Journal d'XP</h3>
+      <h2 className="text-2xl font-black text-slate-900 dark:text-indigo-400">Journal d'XP</h2>
       {logs.map((log) => (
         <div
           key={log.id}

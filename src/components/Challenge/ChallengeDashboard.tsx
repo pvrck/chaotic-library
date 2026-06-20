@@ -89,9 +89,7 @@ export default function ChallengeDashboard({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-black text-slate-800 uppercase tracking-widest">
-        Tes défis du mois
-      </h2>
+      <h2 className="text-2xl font-black text-slate-900 dark:text-indigo-400">Mes défis du mois</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {challenges.map((challenge) => (
           <ChallengeCard key={challenge.id} challenge={challenge} />
