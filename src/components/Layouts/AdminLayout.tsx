@@ -42,7 +42,7 @@ export const AdminLayout = () => {
         </nav>
 
         {/* Retour site */}
-        <div className="border-l md:border-t border-gray-700 pl-4 md:pl-0 md:pt-4 ml-2 md:ml-0 flex items-center">
+        <div className="md:border-t border-gray-700 pl-4 md:pl-0 md:pt-4 ml-2 md:ml-0 flex items-center">
           <Link to="/" className="text-sm text-gray-400 hover:text-white whitespace-nowrap">
             ← Retour
           </Link>
