@@ -32,6 +32,7 @@ describe('Component - AdminChallenge', () => {
       xp_malus: 30,
       duration_days: 10,
       created_at: '2026-06-01T00:00:00.000Z',
+      condition: null,
     },
     {
       id: 'challenge-2',
@@ -42,6 +43,7 @@ describe('Component - AdminChallenge', () => {
       xp_malus: 50,
       duration_days: 30,
       created_at: '2026-06-01T00:00:00.000Z',
+      condition: null,
     },
   ];
 

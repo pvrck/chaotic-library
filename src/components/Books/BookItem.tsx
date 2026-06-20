@@ -83,11 +83,27 @@ export const BookItem = ({
               🧬 Saga : {book.saga_name} (Vol. {book.saga_volume || '?'})
             </p>
           )}
-          {book.added_at && (
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 italic">
-              Ajouté le {formatDate(book.added_at)}
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[10px] text-slate-400 dark:text-slate-500 italic">
+            {book.added_at && <span>Ajouté le {formatDate(book.added_at)}</span>}
+
+            {/* Affichage du nombre de pages si présent */}
+            {book.page_count && (
+              <span className="flex items-center gap-1">• 📖 {book.page_count} pages</span>
+            )}
+
+            {/* Affichage date de fin ou abandon */}
+            {book.status === EBookStatus.Lu && book.finished_at && (
+              <span className="text-emerald-600 dark:text-emerald-500 font-medium">
+                • Fini le {formatDate(book.finished_at)}
+              </span>
+            )}
+
+            {book.status === EBookStatus.Abandonne && book.finished_at && (
+              <span className="text-rose-500 dark:text-rose-400 font-medium">
+                • Abandonné le {formatDate(book.finished_at)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

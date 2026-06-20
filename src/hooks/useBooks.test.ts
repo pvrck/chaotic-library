@@ -32,6 +32,7 @@ describe('Hook - useBooks', () => {
       format: EBookFormat.Papier,
       added_at: '2026-05-01',
       is_lc: true,
+      page_count: 240,
     },
     {
       id: '2',
@@ -42,6 +43,7 @@ describe('Hook - useBooks', () => {
       format: EBookFormat.Numerique,
       added_at: '2026-06-01',
       is_lc: false,
+      page_count: 125,
     },
   ];
 

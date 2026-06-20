@@ -1,22 +1,23 @@
-import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 import { useBooks } from '@/hooks/useBooks';
-import { triggerChaosChallenge, handleXpGain } from '@/services/chaosService';
+import { supabase } from '@/lib/supabaseClient';
+import { handleXpGain, triggerChaosChallenge } from '@/services/chaosService';
 import { Book, EBookStatus } from '@/types/books.type';
-import { Loader2, Sparkles, PlusCircle, Book as BookIcon } from 'lucide-react';
+import { Book as BookIcon, Loader2, PlusCircle, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 
-import { BookSearchBar } from '@/components/Books/BookSearchBar';
-import { BookItem } from '@/components/Books/BookItem';
-import { BookPagination } from '@/components/Books/BookPagination';
 import { BookDetailsModal } from '@/components/Books/BookDetailsModal';
 import BookFormModal from '@/components/Books/BookFormModal';
+import { BookItem } from '@/components/Books/BookItem';
+import { BookPagination } from '@/components/Books/BookPagination';
+import { BookSearchBar } from '@/components/Books/BookSearchBar';
 import { checkAchievements } from '@/services/achievementService';
+import { checkAndUnlockChallenges } from '@/services/challengeService';
 import { EAchievementConditionType } from '@/types/achievement.type';
 import { toast } from 'sonner';
 
 export const BooksPage = () => {
-  const { session, refreshProfile } = useAuth();
+  const { session, refreshProfile, profile } = useAuth();
   const [chaosEvent, setChaosEvent] = useState<string | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
@@ -27,10 +28,25 @@ export const BooksPage = () => {
     try {
       setChaosEvent(null);
       const updateData: Partial<Book> = { status: nextStatus };
-      if (nextStatus === EBookStatus.Lu) updateData.finished_at = new Date().toISOString();
+      if (nextStatus === EBookStatus.Lu || nextStatus === EBookStatus.Abandonne)
+        updateData.finished_at = new Date().toISOString();
 
       const { error } = await supabase.from('books').update(updateData).eq('id', id);
       if (error) throw error;
+
+      // Vérification des défis
+      if (nextStatus === EBookStatus.Lu || nextStatus === EBookStatus.Abandonne) {
+        const result = await checkAndUnlockChallenges(profile!.id);
+
+        if (result === 'SUCCESS') {
+          toast.success('Félicitations ! 🏆 Défi validé !');
+        } else if (result === 'FAILED') {
+          toast.error('Oh non ! 🛑 Le défi est compromis...', {
+            description:
+              "Tu as abandonné un livre, le défi 'Zéro abandon' est raté pour cette fois.",
+          });
+        }
+      }
 
       // 🎲 Jet du Chaos (33%)
       if (nextStatus === EBookStatus.Lu && Math.random() < 0.33) {
