@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   getChangelogs,
   getReadChangelogIds,
@@ -59,12 +59,11 @@ export default function Layout() {
 
   useEffect(() => {
     const checkChangelog = async () => {
-      if (!profile) return; // Utilise ton objet profile existant
+      if (!profile) return;
 
       const all = await getChangelogs();
       const readIds = await getReadChangelogIds(profile.id);
 
-      // Le plus récent est le premier (index 0)
       const latest = all[0];
 
       if (latest && !readIds.includes(latest.id)) {
@@ -85,12 +84,16 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen md:h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row md:overflow-hidden">
-      {/* 📱 HEADER MOBILE (Visible uniquement sur mobile) */}
+      {/* 📱 HEADER MOBILE */}
       <header className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between sticky top-0 z-50">
-        <h1 className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2">
+        {/* Le logo et titre deviennent un Link vers l'accueil */}
+        <Link
+          to="/"
+          className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
           <img src={logo} alt="" aria-hidden className="h-10 w-10" />
           Chaotic Library
-        </h1>
+        </Link>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="p-2 text-slate-600 dark:text-slate-300 cursor-pointer"
@@ -108,12 +111,16 @@ export default function Layout() {
       `}
       >
         <div className="space-y-6">
-          {/* Titre caché sur Mobile (déjà dans le header), visible sur Desktop */}
+          {/* Titre caché sur Mobile, visible sur Desktop */}
           <div className="px-2 hidden md:block">
-            <h1 className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2">
+            {/* Ici aussi, le logo et titre deviennent un Link vers l'accueil */}
+            <Link
+              to="/"
+              className="font-black text-indigo-600 dark:text-indigo-400 tracking-wider text-sm uppercase flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
               <img src={logo} alt="" aria-hidden className="h-10 w-10" />
               Chaotic Library
-            </h1>
+            </Link>
           </div>
 
           {/* Liens de navigation verticaux */}
