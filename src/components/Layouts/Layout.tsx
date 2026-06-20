@@ -2,7 +2,16 @@ import logo from '@/assets/chaotic-librairy-logo.png';
 import * as route from '@/constants/routes';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
-import { Book, LayoutDashboard, LogOut, Menu, ShieldAlert, Sparkles, X } from 'lucide-react';
+import {
+  Book,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ShieldAlert,
+  Sparkles,
+  UsersIcon,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -13,6 +22,7 @@ import {
 import { ChangelogModal } from '@/components/Changelog/ChangelogModal';
 import { Changelog } from '@/types/changelog.type';
 import { Toaster } from 'sonner';
+import { EUserRole } from '@/types/users.type';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -118,10 +128,17 @@ export default function Layout() {
               <span>Ma Bibliothèque</span>
             </NavLink>
 
-            <NavLink to={route.ADMIN} className={getLinkClass}>
-              <ShieldAlert className="h-5 w-5 md:h-4 md:w-4" />
-              <span>Administration</span>
+            <NavLink to={route.COMMUNITY} className={getLinkClass}>
+              <UsersIcon className="h-5 w-5 md:h-4 md:w-4" />
+              <span>Communauté</span>
             </NavLink>
+
+            {profile?.role === EUserRole.admin && (
+              <NavLink to={route.ADMIN} className={getLinkClass}>
+                <ShieldAlert className="h-5 w-5 md:h-4 md:w-4" />
+                <span>Administration</span>
+              </NavLink>
+            )}
           </div>
         </div>
 

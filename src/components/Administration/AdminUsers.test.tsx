@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { AdminUsers } from './AdminUsers';
 import { supabase } from '@/lib/supabaseClient';
-import { Profile } from '@/types/users.type';
+import { EUserRole, Profile } from '@/types/users.type';
 import { Level } from '@/types/levels.type';
 
 interface MockSupabaseQuery {
@@ -26,7 +26,7 @@ const mockUsers: Profile[] = [
     id: '1',
     username: 'Alice',
     email: 'alice@test.com',
-    role: 'user',
+    role: EUserRole.user,
     xp: 100,
     avatar_url: '📖',
     updated_at: '2026-01-01',
@@ -35,7 +35,7 @@ const mockUsers: Profile[] = [
     id: '2',
     username: 'Bob',
     email: 'bob@test.com',
-    role: 'admin',
+    role: EUserRole.admin,
     xp: 200,
     avatar_url: '📖',
     updated_at: '2026-01-01',

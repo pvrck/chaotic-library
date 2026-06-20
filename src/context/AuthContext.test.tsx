@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
-import { Profile } from '@/types/users.type';
+import { EUserRole, Profile } from '@/types/users.type';
 
 // 🔮 1. PREPARER LES MOCKS SUPABASE FLUIDES
 const mockUnsubscribe = vi.fn();
@@ -59,7 +59,7 @@ describe('Context - AuthContext', () => {
     id: 'usr-123',
     email: 'lectrice@magique.com',
     username: 'Pénélope',
-    role: 'user',
+    role: EUserRole.user,
     xp: 1250,
     updated_at: '2026-06-01',
     avatar_url: null,

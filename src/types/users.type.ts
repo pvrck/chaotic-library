@@ -1,8 +1,13 @@
+export enum EUserRole {
+  admin = 'admin',
+  user = 'user',
+}
+
 export interface Profile {
   id: string;
   email: string;
   username: string | null;
-  role: 'admin' | 'user';
+  role: EUserRole;
   xp: number;
   updated_at: string | null;
   avatar_url: string | null;

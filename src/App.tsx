@@ -1,22 +1,23 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
-import Layout from '@/components/Layouts/Layout';
-import { Loader2 } from 'lucide-react';
-import { LoginPage } from '@/pages/LoginPage';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { BooksPage } from '@/pages/BooksPage';
-import { ProfilePage } from '@/pages/ProfilePage';
-import NotFoundPage from '@/pages/NotFoundPage';
 import { AdminLayout } from '@/components/Layouts/AdminLayout';
-import { AdministrationChangeLogPage } from '@/pages/Administration/AdministrationChangeLogPage';
+import Layout from '@/components/Layouts/Layout';
 import * as route from '@/constants/routes';
 import { AdministrationChallengePage } from '@/pages/Administration/AdministrationChallengePage';
+import { AdministrationChangeLogPage } from '@/pages/Administration/AdministrationChangeLogPage';
+import { BooksPage } from '@/pages/BooksPage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { LoginPage } from '@/pages/LoginPage';
+import NotFoundPage from '@/pages/NotFoundPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import { Loader2 } from 'lucide-react';
+import { AdminRouteGuard } from './components/Auth/AdminRouteGuard';
+import { AdminAchievementsPage } from './pages/Administration/AdminAchievementsPage';
 import { AdministrationLevelsPage } from './pages/Administration/AdministrationLevelsPage';
 import { AdministrationUsersPage } from './pages/Administration/AdministrationUsersPage';
-import { AdminRouteGuard } from './components/Auth/AdminRouteGuard';
 import { ChangelogPage } from './pages/ChangelogPage';
-import { AdminAchievementsPage } from './pages/Administration/AdminAchievementsPage';
+import { CommunityPage } from './pages/CommunityPage';
 import { XpHistoryPage } from './pages/XpHistoryPage';
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
           <Route path={route.PROFIL} element={<ProfilePage />} />
           <Route path={route.CHANGELOG} element={<ChangelogPage />} />
           <Route path={route.HISTORIC_XP} element={<XpHistoryPage />} />
+          <Route path={route.COMMUNITY} element={<CommunityPage />} />
         </Route>
 
         <Route element={<AdminRouteGuard />}>

@@ -41,10 +41,14 @@ describe('Page - ProfilePage', () => {
     // Mock chaîné de Supabase
     const mockUpdate = vi.fn().mockReturnThis();
     const mockEq = vi.fn().mockResolvedValue({ error: null });
-    vi.mocked(supabase.from).mockReturnValue({
-      update: mockUpdate,
-      eq: mockEq,
-    } as unknown);
+
+    // Le double cast magique sans "any" se place ici sur l'implémentation
+    vi.mocked(supabase.from).mockImplementation((() => {
+      return {
+        update: mockUpdate,
+        eq: mockEq,
+      };
+    }) as unknown as typeof supabase.from);
 
     render(<ProfilePage />);
 
@@ -67,6 +71,13 @@ describe('Page - ProfilePage', () => {
 
   it('devrait valider la correspondance des mots de passe', async () => {
     vi.mocked(useAuth).mockReturnValue({ profile: { id: '1' } } as unknown as AuthContextType);
+
+    // On ajoute le mock vide ici aussi pour éviter que l'appel dans le useEffect/composant ne crash
+    vi.mocked(supabase.from).mockImplementation((() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+    })) as unknown as typeof supabase.from);
+
     render(<ProfilePage />);
 
     fireEvent.click(screen.getByRole('button', { name: /Mon Profil/i }));

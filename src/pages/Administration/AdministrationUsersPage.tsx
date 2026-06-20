@@ -26,7 +26,7 @@ export const AdministrationUsersPage = () => {
           .order('xp_min', { ascending: true });
 
         if (isMounted) {
-          setUsers(userData || []);
+          setUsers((userData as unknown as Profile[]) || []);
           setLevels(levelData || []);
           setLoading(false);
         }

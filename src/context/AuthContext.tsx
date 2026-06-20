@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      if (!error) setProfile(data);
+      if (!error) setProfile(data as unknown as Profile);
     } catch (err) {
       console.error('Erreur profil:', err);
     }

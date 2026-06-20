@@ -307,6 +307,13 @@ export type Database = {
             foreignKeyName: 'user_challenges_user_id_fkey';
             columns: ['user_id'];
             isOneToOne: false;
+            referencedRelation: 'community_users_list';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'user_challenges_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
@@ -386,9 +393,36 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      community_users_list: {
+        Row: {
+          avatar_url: string | null;
+          id: string | null;
+          last_activity: string | null;
+          registration_date: string | null;
+          username: string | null;
+          xp: number | null;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          id?: string | null;
+          last_activity?: never;
+          registration_date?: string | null;
+          username?: string | null;
+          xp?: number | null;
+        };
+        Update: {
+          avatar_url?: string | null;
+          id?: string | null;
+          last_activity?: never;
+          registration_date?: string | null;
+          username?: string | null;
+          xp?: number | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      check_yearly_goals_cron: { Args: never; Returns: undefined };
       reset_monthly_challenges: { Args: never; Returns: undefined };
       update_xp_with_reason: {
         Args: { log_reason: string; new_xp: number; target_user_id: string };
