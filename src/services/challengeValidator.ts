@@ -12,140 +12,57 @@ export const challengeValidator = {
 
     switch (condition.type) {
       case EConditionType.BooksRead:
-        return await this.checkBooksRead(userId, condition);
+        return this.applyOperator(
+          await this.getBooksReadCount(userId),
+          condition.operator,
+          condition.threshold
+        );
       case EConditionType.PagesRead:
-        return await this.checkPagesRead(userId, condition);
+        return this.applyOperator(
+          await this.getPagesReadCount(userId),
+          condition.operator,
+          condition.threshold
+        );
       case EConditionType.AuthorRepeat:
-        return await this.checkAuthorRepeat(userId, condition);
-      case EConditionType.SagaContinue:
-        return await this.checkSagaContinue(userId, condition);
-      case EConditionType.FormatMix:
-        return await this.checkFormatMix(userId, condition);
-      case EConditionType.NoAbandon:
-        return await this.checkNoAbandon(userId, condition);
+        return this.applyOperator(
+          await this.getMaxAuthorRepeat(userId),
+          condition.operator,
+          condition.threshold
+        );
       case EConditionType.SagaStart:
-        return await this.checkSagaStart(userId, condition);
+        return this.applyOperator(
+          await this.getSagasStartedCount(userId),
+          condition.operator,
+          condition.threshold
+        );
+      case EConditionType.SagaContinue:
+        return this.applyOperator(
+          await this.getSagasContinuedCount(userId),
+          condition.operator,
+          condition.threshold
+        );
+      case EConditionType.SagaEnd:
+        return this.applyOperator(
+          await this.getSagasEndedCount(userId),
+          condition.operator,
+          condition.threshold
+        );
+      case EConditionType.FormatMix:
+        return this.applyOperator(
+          await this.getFormatMixCount(userId),
+          condition.operator,
+          condition.threshold
+        );
+      case EConditionType.NoAbandon:
+        return this.applyOperator(
+          await this.getAbandonedCount(userId),
+          condition.operator,
+          condition.threshold
+        );
       default:
         console.warn(`Type de défi non implémenté : ${condition.type}`);
         return false;
     }
-  },
-
-  async checkBooksRead(userId: string, condition: ChallengeCondition): Promise<boolean> {
-    const { count } = await supabase
-      .from('books')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('status', EBookStatus.Lu);
-
-    const total = count || 0;
-    return this.applyOperator(total, condition.operator, condition.threshold);
-  },
-
-  async checkPagesRead(userId: string, condition: ChallengeCondition): Promise<boolean> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('page_count')
-      .eq('user_id', userId)
-      .eq('status', EBookStatus.Lu);
-
-    if (error || !data) {
-      console.error('Erreur lors du calcul des pages lues:', error);
-      return false;
-    }
-
-    // On calcule la somme côté client
-    const totalPages = data.reduce((sum, book) => sum + (book.page_count || 0), 0);
-
-    return this.applyOperator(totalPages, condition.operator, condition.threshold);
-  },
-
-  async checkAuthorRepeat(userId: string, condition: ChallengeCondition): Promise<boolean> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('author')
-      .eq('user_id', userId)
-      .eq('status', EBookStatus.Lu);
-
-    if (error || !data) return false;
-
-    // On compte les occurrences par auteur
-    const counts: Record<string, number> = {};
-    data.forEach((b) => {
-      counts[b.author] = (counts[b.author] || 0) + 1;
-    });
-
-    // On regarde si au moins un auteur a atteint le seuil
-    const maxBooksByAuthor = Math.max(...Object.values(counts), 0);
-    return this.applyOperator(maxBooksByAuthor, condition.operator, condition.threshold);
-  },
-
-  async checkSagaContinue(userId: string, condition: ChallengeCondition): Promise<boolean> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('saga_name')
-      .eq('user_id', userId)
-      .eq('status', EBookStatus.Lu)
-      .not('saga_name', 'is', null);
-
-    if (error || !data) return false;
-
-    const counts: Record<string, number> = {};
-    data.forEach((b) => {
-      if (b.saga_name) counts[b.saga_name] = (counts[b.saga_name] || 0) + 1;
-    });
-
-    const maxBooksInSaga = Math.max(...Object.values(counts), 0);
-    return this.applyOperator(maxBooksInSaga, condition.operator, condition.threshold);
-  },
-
-  // Défi : Lire des livres de formats variés
-  async checkFormatMix(userId: string, condition: ChallengeCondition): Promise<boolean> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('format')
-      .eq('user_id', userId)
-      .eq('status', EBookStatus.Lu);
-
-    if (error || !data) return false;
-
-    // On utilise un Set pour ne garder que les formats uniques
-    const uniqueFormats = new Set(data.map((b) => b.format)).size;
-
-    return this.applyOperator(uniqueFormats, condition.operator, condition.threshold);
-  },
-
-  // Défi : Ne pas abandonner de livres
-  async checkNoAbandon(userId: string, condition: ChallengeCondition): Promise<boolean> {
-    const { count, error } = await supabase
-      .from('books')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('status', EBookStatus.Abandonne);
-
-    if (error) {
-      console.error('Erreur checkNoAbandon:', error);
-      return false;
-    }
-
-    // On s'assure que le count est traité comme un nombre
-    const totalAbandoned = count ?? 0;
-    // Si le défi est "Pas d'abandon", la condition sera (valeur <= 0) ou (valeur === 0)
-    return this.applyOperator(totalAbandoned, condition.operator, condition.threshold);
-  },
-
-  // Défi : Commencer une nouvelle saga (lire le volume 1)
-  async checkSagaStart(userId: string, condition: ChallengeCondition): Promise<boolean> {
-    const { count, error } = await supabase
-      .from('books')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('status', EBookStatus.Lu)
-      .eq('saga_volume', 1); // Cible spécifiquement le premier tome
-
-    if (error) return false;
-
-    return this.applyOperator(count || 0, condition.operator, condition.threshold);
   },
 
   // Helper pour comparer les valeurs (GTE, EQ, LTE)
@@ -169,100 +86,210 @@ export const challengeValidator = {
     }
 
     switch (condition.type) {
-      case EConditionType.BooksRead:
-        return await this.calculateBooksRead(userId, condition);
-      case EConditionType.PagesRead:
-        return await this.calculatePagesRead(userId, condition);
-      case EConditionType.AuthorRepeat:
-        return await this.calculateAuthorRepeat(userId, condition);
-      case EConditionType.SagaContinue:
-        return await this.calculateSagaContinue(userId, condition);
-      case EConditionType.FormatMix:
-        return await this.calculateFormatMix(userId, condition);
-      case EConditionType.NoAbandon:
-        return await this.calculateNoAbandon(userId, condition);
-      case EConditionType.SagaStart:
-        return await this.calculateSagaStart(userId, condition);
+      case EConditionType.BooksRead: {
+        const value = await this.getBooksReadCount(userId);
+        return Math.min((value / condition.threshold) * 100, 100);
+      }
+      case EConditionType.PagesRead: {
+        const value = await this.getPagesReadCount(userId);
+        return Math.min((value / condition.threshold) * 100, 100);
+      }
+      case EConditionType.AuthorRepeat: {
+        const value = await this.getMaxAuthorRepeat(userId);
+        return Math.min((value / condition.threshold) * 100, 100);
+      }
+      case EConditionType.SagaStart: {
+        const value = await this.getSagasStartedCount(userId);
+        return Math.min((value / condition.threshold) * 100, 100);
+      }
+      case EConditionType.SagaContinue: {
+        const value = await this.getSagasContinuedCount(userId);
+        return Math.min((value / condition.threshold) * 100, 100);
+      }
+      case EConditionType.SagaEnd: {
+        const value = await this.getSagasEndedCount(userId);
+        return Math.min((value / condition.threshold) * 100, 100);
+      }
+      case EConditionType.FormatMix: {
+        const value = await this.getFormatMixCount(userId);
+        return Math.min((value / condition.threshold) * 100, 100);
+      }
+      case EConditionType.NoAbandon: {
+        const abandoned = await this.getAbandonedCount(userId);
+        return abandoned <= condition.threshold ? 100 : 0;
+      }
       default:
         return 0;
     }
   },
 
-  // --- CALCULS DE PROGRESSION ---
+  // --- LOGIQUE MÉTIER DES COMPTAGES ---
 
-  async calculateBooksRead(userId: string, condition: ChallengeCondition) {
+  async getBooksReadCount(userId: string): Promise<number> {
     const { count } = await supabase
       .from('books')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', EBookStatus.Lu);
-    return Math.min(((count || 0) / condition.threshold) * 100, 100);
+    return count || 0;
   },
 
-  async calculatePagesRead(userId: string, condition: ChallengeCondition) {
-    const { data } = await supabase
+  async getPagesReadCount(userId: string): Promise<number> {
+    const { data, error } = await supabase
       .from('books')
       .select('page_count')
       .eq('user_id', userId)
       .eq('status', EBookStatus.Lu);
-    const total = data?.reduce((sum, b) => sum + (b.page_count || 0), 0) || 0;
-    return Math.min((total / condition.threshold) * 100, 100);
+
+    if (error || !data) return 0;
+    return data.reduce((sum, book) => sum + (book.page_count || 0), 0);
   },
 
-  async calculateAuthorRepeat(userId: string, condition: ChallengeCondition) {
-    const { data } = await supabase
+  async getMaxAuthorRepeat(userId: string): Promise<number> {
+    const { data, error } = await supabase
       .from('books')
       .select('author')
       .eq('user_id', userId)
       .eq('status', EBookStatus.Lu);
-    const counts: Record<string, number> = {};
-    data?.forEach((b) => (counts[b.author] = (counts[b.author] || 0) + 1));
-    const max = Math.max(...Object.values(counts), 0);
-    return Math.min((max / condition.threshold) * 100, 100);
-  },
 
-  async calculateSagaContinue(userId: string, condition: ChallengeCondition) {
-    const { data } = await supabase
-      .from('books')
-      .select('saga_name')
-      .eq('user_id', userId)
-      .eq('status', EBookStatus.Lu)
-      .not('saga_name', 'is', null);
+    if (error || !data) return 0;
+
     const counts: Record<string, number> = {};
-    data?.forEach((b) => {
-      if (b.saga_name) counts[b.saga_name] = (counts[b.saga_name] || 0) + 1;
+    data.forEach((b) => {
+      counts[b.author] = (counts[b.author] || 0) + 1;
     });
-    const max = Math.max(...Object.values(counts), 0);
-    return Math.min((max / condition.threshold) * 100, 100);
+
+    return Math.max(...Object.values(counts), 0);
   },
 
-  async calculateFormatMix(userId: string, condition: ChallengeCondition) {
-    const { data } = await supabase
+  async getFormatMixCount(userId: string): Promise<number> {
+    const { data, error } = await supabase
       .from('books')
       .select('format')
       .eq('user_id', userId)
       .eq('status', EBookStatus.Lu);
-    const unique = new Set(data?.map((b) => b.format)).size;
-    return Math.min((unique / condition.threshold) * 100, 100);
+
+    if (error || !data) return 0;
+    return new Set(data.map((b) => b.format)).size;
   },
 
-  async calculateNoAbandon(userId: string, condition: ChallengeCondition) {
+  async getAbandonedCount(userId: string): Promise<number> {
     const { count } = await supabase
       .from('books')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', EBookStatus.Abandonne);
-    // Pour "NoAbandon", si threshold = 0, progression 100% si count = 0, sinon 0%
-    return (count || 0) <= condition.threshold ? 100 : 0;
+    return count ?? 0;
   },
 
-  async calculateSagaStart(userId: string, condition: ChallengeCondition) {
-    const { count } = await supabase
+  // --- NOUVELLE LOGIQUE ASSOCIEE AUX SAGAS ---
+
+  // SAGA_START : Nombre de tomes 1 lus
+  async getSagasStartedCount(userId: string): Promise<number> {
+    const { count, error } = await supabase
       .from('books')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', EBookStatus.Lu)
-      .eq('saga_volume', 1);
-    return Math.min(((count || 0) / condition.threshold) * 100, 100);
+      .eq('volume_number', 1) // Met à jour vers volume_number si saga_volume a été migré
+      .not('saga_id', 'is', null);
+
+    if (error) return 0;
+    return count || 0;
+  },
+
+  // SAGA_CONTINUE : Nombre de sagas distinctes avancées (au moins un tome lu après le premier)
+  async getSagasContinuedCount(userId: string): Promise<number> {
+    // Récupère tous les livres lus reliés à une saga
+    const { data, error } = await supabase
+      .from('books')
+      .select('saga_id, volume_number')
+      .eq('user_id', userId)
+      .eq('status', EBookStatus.Lu)
+      .not('saga_id', 'is', null);
+
+    if (error || !data) return 0;
+
+    // Regroupe les tomes lus par saga_id
+    const sagasProgress: Record<string, number[]> = {};
+    data.forEach((b) => {
+      if (!sagasProgress[b.saga_id]) sagasProgress[b.saga_id] = [];
+      sagasProgress[b.saga_id].push(b.volume_number!);
+    });
+
+    let continuedCount = 0;
+
+    // Une saga est considérée comme "continuée" si l'utilisateur a lu un tome supérieur au tome 1
+    // OU s'il a lu au moins deux tomes différents d'une même saga
+    for (const sagaId in sagasProgress) {
+      const volumes = sagasProgress[sagaId];
+      const hasAdvancedVolume = volumes.some((vol) => vol > 1);
+      const readMultipleVolumes = volumes.length >= 2;
+
+      if (hasAdvancedVolume || readMultipleVolumes) {
+        continuedCount++;
+      }
+    }
+
+    return continuedCount;
+  },
+
+  // SAGA_END : Nombre de sagas terminées ce mois-ci / au total
+  async getSagasEndedCount(userId: string): Promise<number> {
+    const { data: books, error } = await supabase
+      .from('books')
+      .select('saga_id, volume_number')
+      .eq('user_id', userId)
+      .eq('status', EBookStatus.Lu)
+      .not('saga_id', 'is', null);
+
+    if (error || !books) return 0;
+
+    let completedSagasCount = 0;
+
+    // On isole les sagas uniques lues pour vérifier leur statut global
+    const uniqueSagaIds = Array.from(new Set(books.map((b) => b.saga_id)));
+
+    for (const sagaId of uniqueSagaIds) {
+      // 1. Récupérer les métadonnées de la saga
+      const { data: sagaInfo } = await supabase
+        .from('sagas')
+        .select('total_volumes')
+        .eq('id', sagaId)
+        .maybeSingle();
+
+      if (!sagaInfo) continue;
+
+      let targetFinalVolume = sagaInfo.total_volumes;
+
+      // 2. Si non renseigné, fallback sur le plus grand volume enregistré dans le catalogue global
+      if (!targetFinalVolume) {
+        const { data: maxVolume } = await supabase
+          .from('saga_volumes')
+          .select('volume_number')
+          .eq('saga_id', sagaId)
+          .order('volume_number', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (maxVolume) {
+          targetFinalVolume = maxVolume.volume_number;
+        }
+      }
+
+      // Si on n'a aucune information sur la fin de la saga, on ne peut pas la valider
+      if (!targetFinalVolume) continue;
+
+      // 3. Vérifier si l'utilisateur a bien lu ce tome final précis
+      const hasReadFinalVolume = books.some(
+        (b) => b.saga_id === sagaId && b.volume_number === targetFinalVolume
+      );
+
+      if (hasReadFinalVolume) {
+        completedSagasCount++;
+      }
+    }
+
+    return completedSagasCount;
   },
 };

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import {
   Book,
   LayoutDashboard,
+  Library,
   LogOut,
   Menu,
   ShieldAlert,
@@ -133,6 +134,11 @@ export default function Layout() {
             <NavLink to={route.LIVRES} className={getLinkClass}>
               <Book className="h-5 w-5 md:h-4 md:w-4" />
               <span>Ma Bibliothèque</span>
+            </NavLink>
+
+            <NavLink to={route.SAGAS} className={getLinkClass}>
+              <Library className="h-5 w-5 md:h-4 md:w-4" />
+              <span>Les sagas</span>
             </NavLink>
 
             <NavLink to={route.COMMUNITY} className={getLinkClass}>

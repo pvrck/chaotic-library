@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { Book, EBookStatus } from '@/types/books.type';
 import { ChallengePoolItem } from '@/types/challenges.type';
-import { updateXpWithReason } from '@/utils/xpUtils';
+import { getCurrentXp, updateXpWithReason } from '@/utils/xpUtils';
 
 /**
  * Déclenche un défi du chaos aléatoire en BDD si disponible
@@ -89,9 +89,7 @@ export const handleXpGain = async (nextStatus: EBookStatus, targetBook?: Book) =
   if (!user) return;
 
   // 3. Récupération de l'XP actuel
-  const { data: prof } = await supabase.from('profiles').select('xp').eq('id', user.id).single();
-
-  const currentXp = prof?.xp || 0;
+  const { currentXp } = await getCurrentXp(user.id);
 
   await updateXpWithReason(user.id, currentXp + xp, reason);
 };

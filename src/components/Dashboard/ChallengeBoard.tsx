@@ -56,7 +56,7 @@ export const ChallengeBoard = () => {
 
   return (
     <>
-      {profile?.id && <ChallengeDashboard userId={profile.id} />}
+      {profile?.id && <ChallengeDashboard userId={profile.id} refreshTrigger={refreshTrigger} />}
 
       <ActiveChallenges
         setRefreshTrigger={setRefreshTrigger}

@@ -48,6 +48,7 @@ export type Database = {
           is_lc: boolean;
           isbn: string | null;
           page_count: number | null;
+          saga_id: string | null;
           saga_name: string | null;
           saga_volume: number | null;
           started_at: string | null;
@@ -55,6 +56,7 @@ export type Database = {
           thumbnail: string | null;
           title: string;
           user_id: string;
+          volume_number: number | null;
         };
         Insert: {
           added_at?: string | null;
@@ -65,6 +67,7 @@ export type Database = {
           is_lc?: boolean;
           isbn?: string | null;
           page_count?: number | null;
+          saga_id?: string | null;
           saga_name?: string | null;
           saga_volume?: number | null;
           started_at?: string | null;
@@ -72,6 +75,7 @@ export type Database = {
           thumbnail?: string | null;
           title: string;
           user_id: string;
+          volume_number?: number | null;
         };
         Update: {
           added_at?: string | null;
@@ -82,6 +86,7 @@ export type Database = {
           is_lc?: boolean;
           isbn?: string | null;
           page_count?: number | null;
+          saga_id?: string | null;
           saga_name?: string | null;
           saga_volume?: number | null;
           started_at?: string | null;
@@ -89,8 +94,17 @@ export type Database = {
           thumbnail?: string | null;
           title?: string;
           user_id?: string;
+          volume_number?: number | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'books_saga_id_fkey';
+            columns: ['saga_id'];
+            isOneToOne: false;
+            referencedRelation: 'sagas';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       challenge_pool: {
         Row: {
@@ -237,6 +251,86 @@ export type Database = {
           xp?: number;
         };
         Relationships: [];
+      };
+      saga_volumes: {
+        Row: {
+          cover_url: string | null;
+          id: string;
+          isbn: string | null;
+          page_count: number | null;
+          saga_id: string;
+          title: string;
+          volume_number: number;
+        };
+        Insert: {
+          cover_url?: string | null;
+          id?: string;
+          isbn?: string | null;
+          page_count?: number | null;
+          saga_id: string;
+          title: string;
+          volume_number: number;
+        };
+        Update: {
+          cover_url?: string | null;
+          id?: string;
+          isbn?: string | null;
+          page_count?: number | null;
+          saga_id?: string;
+          title?: string;
+          volume_number?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'saga_volumes_saga_id_fkey';
+            columns: ['saga_id'];
+            isOneToOne: false;
+            referencedRelation: 'sagas';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      sagas: {
+        Row: {
+          author: string | null;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          title: string;
+          total_volumes: number | null;
+        };
+        Insert: {
+          author?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          title: string;
+          total_volumes?: number | null;
+        };
+        Update: {
+          author?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          title?: string;
+          total_volumes?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sagas_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'community_users_list';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sagas_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       user_achievements: {
         Row: {
