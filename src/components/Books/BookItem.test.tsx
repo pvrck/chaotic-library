@@ -13,7 +13,7 @@ describe('Component - BookItem', () => {
     status: EBookStatus.EnCours,
     is_lc: true,
     saga_name: 'La Passeuse de Mots',
-    saga_volume: 1,
+    volume_number: 1,
     added_at: '2026-05-15T10:00:00.000Z',
     thumbnail: 'https://images.com/passeuse.jpg',
     page_count: 360,

@@ -5,6 +5,7 @@ export const PROFIL = '/profil';
 export const CHANGELOG = '/changelog';
 export const HISTORIC_XP = '/historique-xp';
 export const COMMUNITY = '/communaute';
+export const SAGAS = '/sagas';
 
 export const ADMIN = '/admin';
 export const ADMIN_UTILISATEURS = `${ADMIN}/utilisateurs`;

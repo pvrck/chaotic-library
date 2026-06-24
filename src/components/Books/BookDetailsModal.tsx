@@ -42,7 +42,7 @@ export const BookDetailsModal = ({ book, details, loading, onClose }: BookDetail
               <p className="text-slate-500 font-medium">par {book.author}</p>
               {book.saga_name && (
                 <p className="text-indigo-500 font-semibold mt-1">
-                  🧬 Saga : {book.saga_name} (Vol. {book.saga_volume || '?'})
+                  🧬 Saga : {book.saga_name} (Vol. {book.volume_number || '?'})
                 </p>
               )}
             </div>
