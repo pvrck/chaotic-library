@@ -1,5 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
-import { EChallengeType, UserChallenge } from '@/types/challenges.type';
+import { EChallengeStatus, EChallengeType, UserChallenge } from '@/types/challenges.type';
 import { Calendar, Dices, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
@@ -70,7 +70,7 @@ export const ChallengeBlock = ({
         {
           user_id: profile.id,
           challenge_id: chosenChallenge.id,
-          status: 'en_cours',
+          status: EChallengeStatus.EnCours,
           expires_at: expiresAt.toISOString(),
         },
       ]);

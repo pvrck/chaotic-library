@@ -9,7 +9,13 @@ import {
 import { useEffect, useState } from 'react';
 import { ChallengeCard } from './ChallengeCard';
 
-export default function ChallengeDashboard({ userId }: { userId: string }) {
+export default function ChallengeDashboard({
+  userId,
+  refreshTrigger,
+}: {
+  userId: string;
+  refreshTrigger?: number;
+}) {
   const [challenges, setChallenges] = useState<UserChallengeBoard[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -83,7 +89,7 @@ export default function ChallengeDashboard({ userId }: { userId: string }) {
     }
 
     loadChallenges();
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
   if (loading) return <div>Chargement de tes défis...</div>;
 
