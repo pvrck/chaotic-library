@@ -80,7 +80,7 @@ export const BookItem = ({
           </p>
           {book.saga_name && (
             <p className="text-[11px] text-indigo-500 font-medium mt-0.5">
-              🧬 Saga : {book.saga_name} (Vol. {book.saga_volume || '?'})
+              🧬 Saga : {book.saga_name} (Vol. {book.volume_number || '?'})
             </p>
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[10px] text-slate-400 dark:text-slate-500 italic">

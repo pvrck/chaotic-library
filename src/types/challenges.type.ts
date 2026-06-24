@@ -16,6 +16,7 @@ export enum EConditionType {
   BooksRead = 'BOOKS_READ',
   PagesRead = 'PAGES_READ',
   SagaContinue = 'SAGA_CONTINUE',
+  SagaEnd = 'SAGA_END',
   SagaStart = 'SAGA_START',
   AuthorRepeat = 'AUTHOR_REPEAT',
   FormatMix = 'FORMAT_MIX',
