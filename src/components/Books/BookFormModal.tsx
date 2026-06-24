@@ -5,6 +5,7 @@ import { searchGoogleBooks } from '@/services/googleBooksService';
 import { X, BookOpen, Loader2 } from 'lucide-react';
 import { Book, BookFormat, BookStatus, EBookFormat, EBookStatus } from '@/types/books.type';
 import { GoogleBookSuggestion } from '@/types/googleBooks.type';
+import { getCurrentXp, updateXpWithReason } from '@/utils/xpUtils';
 
 interface BookFormModalProps {
   isOpen: boolean;
@@ -154,6 +155,8 @@ export default function BookFormModal({
       }
 
       onSuccess();
+      const { currentXp } = await getCurrentXp(profile.id);
+      updateXpWithReason(profile.id, currentXp - 10, `Nouveau livre ajouté - ${formData.title}`);
       onClose();
     } catch (error: unknown) {
       console.error(error);
