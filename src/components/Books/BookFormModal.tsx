@@ -44,7 +44,9 @@ export default function BookFormModal({
   );
 
   // États pour la gestion des Sagas
-  const [sagasList, setSagasList] = useState<Saga[]>([]);
+  const [sagasList, setSagasList] = useState<
+    Pick<Saga, 'id' | 'title' | 'author' | 'total_volumes'>[]
+  >([]);
   const [isPartOfSaga, setIsPartOfSaga] = useState(
     !!bookToEdit?.saga_id || !!bookToEdit?.saga_name
   );

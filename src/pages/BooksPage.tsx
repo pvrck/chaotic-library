@@ -5,7 +5,7 @@ import { handleXpGain, triggerChaosChallenge } from '@/services/chaosService';
 import { Book, EBookStatus } from '@/types/books.type';
 import { Book as BookIcon, Loader2, PlusCircle, Sparkles } from 'lucide-react';
 import { useState } from 'react';
-
+import { Dices } from 'lucide-react';
 import { BookDetailsModal } from '@/components/Books/BookDetailsModal';
 import BookFormModal from '@/components/Books/BookFormModal';
 import { BookItem } from '@/components/Books/BookItem';
@@ -15,6 +15,7 @@ import { checkAchievements } from '@/services/achievementService';
 import { checkAndUnlockChallenges } from '@/services/challengeService';
 import { EAchievementConditionType } from '@/types/achievement.type';
 import { toast } from 'sonner';
+import PalSelectorModal from '@/components/Books/PalSelectorModal';
 
 export const BooksPage = () => {
   const { session, refreshProfile, profile } = useAuth();
@@ -22,7 +23,20 @@ export const BooksPage = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
 
+  const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
+
   const b = useBooks();
+
+  // 🌟 Construction d'un dictionnaire simple saga_id -> saga_name pour notre algorithme
+  const sagasMap = b.books.reduce(
+    (acc, book) => {
+      if (book.saga_id && book.saga_name) {
+        acc[book.saga_id] = book.saga_name;
+      }
+      return acc;
+    },
+    {} as Record<string, string>
+  );
 
   const updateStatus = async (id: string, nextStatus: EBookStatus) => {
     try {
@@ -135,15 +149,25 @@ export const BooksPage = () => {
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <BookIcon className="h-6 w-6 text-indigo-600" /> Ma Bibliothèque
         </h1>
-        <button
-          onClick={() => {
-            setBookToEdit(null);
-            setIsFormModalOpen(true);
-          }}
-          className="text-sm text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1.5 font-bold cursor-pointer"
-        >
-          <PlusCircle className="h-4 w-4" /> Ajouter un livre
-        </button>
+        {/* 🌟 Groupe de boutons d'actions */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsDrawModalOpen(true)}
+            className="text-sm text-amber-600 hover:text-amber-800 transition-colors flex items-center gap-1.5 font-bold cursor-pointer"
+          >
+            <Dices className="h-4 w-4" /> Le Destin de la PAL
+          </button>
+
+          <button
+            onClick={() => {
+              setBookToEdit(null);
+              setIsFormModalOpen(true);
+            }}
+            className="text-sm text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1.5 font-bold cursor-pointer"
+          >
+            <PlusCircle className="h-4 w-4" /> Ajouter un livre
+          </button>
+        </div>
       </header>
 
       <div className="w-full space-y-4 relative">
@@ -252,6 +276,16 @@ export const BooksPage = () => {
             onClose={() => b.setSelectedBook(null)}
           />
         )}
+
+        <PalSelectorModal
+          isOpen={isDrawModalOpen}
+          onClose={() => setIsDrawModalOpen(false)}
+          allBooks={b.books}
+          sagasMap={sagasMap}
+          onValidateBook={async (bookId) => {
+            await updateStatus(bookId, EBookStatus.EnCours);
+          }}
+        />
       </div>
     </div>
   );

@@ -1,139 +1,186 @@
-import SagaDetailModal from '@/components/Sagas/SagaDetailModal';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
-import { Saga } from '@/types/saga.type';
-import { Edit3, Library, Search } from 'lucide-react';
+import { sagaService } from '@/services/sagaService';
+import { ESagaUserStatus, Saga } from '@/types/saga.type';
+import { Library, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+// Import de nos nouveaux composants découpés
+import SagaCard from '@/components/Sagas/SagaCard';
+import SagaPagination from '@/components/Sagas/SagaPagination';
+import SagaDetailModal from '@/components/Sagas/SagaDetailModal';
 
 export default function SagasPage() {
   const { profile } = useAuth();
-  const isAdmin = profile?.role === 'admin';
+  const currentUserId = profile?.id;
 
   const [sagas, setSagas] = useState<Saga[]>([]);
   const [search, setSearch] = useState('');
-  const [selectedSaga, setSelectedSaga] = useState<Saga | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [selectedSaga, setSelectedSaga] = useState<Saga | null>(null);
+  const [currentFilter, setCurrentFilter] = useState<string>('all');
+
+  const pageSize = 9;
 
   const fetchSagas = async () => {
+    if (!currentUserId) return;
     setLoading(true);
-    const { data } = await supabase.from('sagas').select('*').order('title', { ascending: true });
-    if (data) setSagas(data);
-    setLoading(false);
+    try {
+      const { data, count } = await sagaService.getSagasCatalog(
+        currentUserId,
+        currentPage,
+        pageSize,
+        currentFilter
+      );
+      setSagas(data);
+      setTotalCount(count);
+    } catch (error) {
+      console.error('Erreur catalogue :', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const loadSagas = async () => {
-      await fetchSagas();
+    const loadData = async () => {
+      if (!currentUserId) return;
+      setLoading(true);
+      try {
+        const { data, count } = await sagaService.getSagasCatalog(
+          currentUserId,
+          currentPage,
+          pageSize,
+          currentFilter
+        );
+        setSagas(data);
+        setTotalCount(count);
+      } catch (error) {
+        console.error('Erreur catalogue :', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadSagas();
-  }, []);
+    loadData();
+  }, [currentUserId, currentPage, currentFilter, pageSize]);
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Filtrer les sagas selon la recherche
+  const handleStatusChange = async (sagaId: string, status: ESagaUserStatus | null) => {
+    if (!currentUserId) return;
+    try {
+      await sagaService.updateManualStatus(currentUserId, sagaId, status);
+      await fetchSagas();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleToggleFavorite = async (sagaId: string, currentFav: boolean) => {
+    if (!currentUserId) return;
+    try {
+      await sagaService.toggleFavorite(currentUserId, sagaId, !currentFav);
+      await fetchSagas();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const formatStatusLabel = (status: ESagaUserStatus | null) => {
+    if (!status) return 'Favori ⭐';
+    if (status === ESagaUserStatus.ALire) return 'À commencer';
+    if (status === ESagaUserStatus.EnCours) return 'En cours';
+    if (status === ESagaUserStatus.Termine) return 'Terminée';
+    if (status === ESagaUserStatus.Abandonne) return 'Abandonnée';
+    return status;
+  };
+
   const filteredSagas = sagas.filter(
     (saga) =>
       saga.title.toLowerCase().includes(search.toLowerCase()) ||
       (saga.author && saga.author.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const handleDeleteSaga = async (sagaId: string) => {
-    if (!isAdmin) {
-      alert('Désolé, seul un administrateur peut supprimer une saga.');
-      return;
-    }
-
-    const confirmed = window.confirm(
-      'Es-tu sûre de vouloir supprimer cette saga ? Cela peut impacter les volumes liés.'
-    );
-    if (!confirmed) return;
-
-    try {
-      const { error } = await supabase.from('sagas').delete().eq('id', sagaId);
-
-      if (error) throw error;
-
-      // Mettre à jour ton état local pour rafraîchir l'affichage
-      setSagas((prev) => prev.filter((s) => s.id !== sagaId));
-    } catch (error) {
-      console.error('Erreur lors de la suppression :', error);
-      alert('Impossible de supprimer la saga.');
-    }
-  };
-
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* En-tête */}
+      {/* En-tête de la page */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
             <Library className="h-5 w-5 text-indigo-500" /> Bibliothèque des Sagas
           </h2>
           <p className="text-xs text-slate-400">
-            Consulte, complète et édite le catalogue partagé des sagas littéraires.
+            Consulte l'index général et gère ta progression. ({totalCount} sagas répertoriées)
           </p>
         </div>
 
-        {/* Barre de recherche */}
         <div className="relative max-w-xs w-full">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher une saga, un auteur..."
+            placeholder="Filtrer sur cette page..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
           />
         </div>
       </div>
 
-      {/* Grille des sagas */}
+      {/* 🎛️ Barre de filtres rapides */}
+      <div className="flex flex-wrap items-center gap-2 pb-2">
+        {[
+          { id: 'all', label: '🌍 Toutes' },
+          { id: 'en_cours', label: '📖 En cours' },
+          { id: 'a_lire', label: '📚 Dans ma PAL' },
+          { id: 'termine', label: '✅ Terminées' },
+          { id: 'abandonne', label: '❌ Abandonnées' },
+          { id: 'favorites', label: '⭐ Mes Favoris' },
+        ].map((filter) => (
+          <button
+            key={filter.id}
+            onClick={() => {
+              setCurrentPage(1);
+              setCurrentFilter(filter.id);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              currentFilter === filter.id
+                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Zone principale */}
       {loading ? (
-        <div className="text-center text-xs text-slate-400 py-12">
-          Chargement de l'index des reliques...
-        </div>
+        <div className="text-center text-xs text-slate-400 py-12">Chargement...</div>
       ) : filteredSagas.length === 0 ? (
-        <div className="text-center text-xs text-slate-400 py-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
-          Aucune saga trouvée dans les archives.
+        <div className="text-center text-xs text-slate-400 py-12 bg-white dark:bg-slate-900 border rounded-2xl">
+          Aucune saga trouvée.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {filteredSagas.map((saga) => (
-            <div
-              key={saga.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex flex-col justify-between hover:shadow-md transition-all group"
-            >
-              <div className="space-y-1">
-                <h3 className="font-black text-slate-800 dark:text-slate-100 text-sm tracking-tight truncate group-hover:text-indigo-500 transition-colors">
-                  {saga.title}
-                </h3>
-                <p className="text-xs text-slate-400 truncate">
-                  Par {saga.author || 'Auteur Inconnu'}
-                </p>
-              </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {filteredSagas.map((saga) => (
+              <SagaCard
+                key={saga.id}
+                saga={saga}
+                onStatusChange={handleStatusChange}
+                onToggleFavorite={handleToggleFavorite}
+                onSelectSaga={setSelectedSaga}
+                formatStatusLabel={formatStatusLabel}
+              />
+            ))}
+          </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
-                <span className="px-2 py-0.5 bg-slate-50 dark:bg-slate-800 font-bold rounded-md text-slate-500 dark:text-slate-400">
-                  {saga.total_volumes ? `${saga.total_volumes} tomes prévus` : 'Tomes indéterminés'}
-                </span>
-
-                <button
-                  onClick={() => setSelectedSaga(saga)}
-                  className="flex items-center gap-1 font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                >
-                  <Edit3 className="h-3 w-3" /> Gérer
-                </button>
-                {isAdmin && (
-                  <button
-                    onClick={() => handleDeleteSaga(saga.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    Supprimer
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+          <SagaPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
       )}
 
       {/* Modal d'édition détaillée si sélectionné */}

@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { ChallengePoolItem, EChallengeStatus, UserChallenge } from '@/types/challenges.type';
 import { useAuth } from '@/context/AuthContext';
-import { EChallengeType } from '@/types/challenges.type';
-import { ActiveChallenges } from './ActiveChallenges';
-import { ChallengeBlock } from './ChallengeBlock';
+import { supabase } from '@/lib/supabaseClient';
+import {
+  ChallengePoolItem,
+  EChallengeStatus,
+  EChallengeType,
+  UserChallenge,
+} from '@/types/challenges.type';
+import { useEffect, useState } from 'react';
 import ChallengeDashboard from '../Challenge/ChallengeDashboard';
+import { ActiveChallenges } from './ActiveChallenges';
 
 export const ChallengeBoard = () => {
   const { profile } = useAuth();
@@ -64,22 +67,22 @@ export const ChallengeBoard = () => {
         activeChallenges={activeChallenges}
       />
 
-      {/* 🎲 ACTIONS DE JEU */}
+      {/* 🎲 ACTIONS DE JEU 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Lancer Mensuel */}
+        * Lancer Mensuel *
         <ChallengeBlock
           typeChallenge={EChallengeType.Mensuel}
           setRefreshTrigger={setRefreshTrigger}
           activeChallenges={activeChallenges}
         />
 
-        {/* Lancer Chaos */}
+        * Lancer Chaos *
         <ChallengeBlock
           typeChallenge={EChallengeType.Chaos}
           setRefreshTrigger={setRefreshTrigger}
           activeChallenges={activeChallenges}
         />
-      </div>
+      </div>*/}
     </>
   );
 };
