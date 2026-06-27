@@ -437,6 +437,55 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_sagas: {
+        Row: {
+          id: string;
+          is_favorite: boolean | null;
+          saga_id: string;
+          status: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          is_favorite?: boolean | null;
+          saga_id: string;
+          status?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          id?: string;
+          is_favorite?: boolean | null;
+          saga_id?: string;
+          status?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_sagas_saga_id_fkey';
+            columns: ['saga_id'];
+            isOneToOne: false;
+            referencedRelation: 'sagas';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'user_sagas_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'community_users_list';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'user_sagas_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       xp_history: {
         Row: {
           amount: number;

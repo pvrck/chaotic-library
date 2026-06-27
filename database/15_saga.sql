@@ -74,3 +74,46 @@ USING (
     AND profiles.role = 'admin'
   )
 );
+
+-- =======================================================
+-- 5. CRÉATION DE LA TABLE DES INTERACTIONS SAGAS UTILISATEURS
+-- =======================================================
+create table public.user_sagas (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null, -- Lié à tes profils
+  saga_id uuid references public.sagas(id) on delete cascade not null,
+  status text check (status in ('a_lire', 'en_cours', 'termine', 'abandonne')),
+  is_favorite boolean default false,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  
+  -- Contrainte d'unicité : Une seule ligne par couple utilisateur/saga
+  unique (user_id, saga_id)
+);
+
+-- Activation de la sécurité RLS
+alter table public.user_sagas enable row level security;
+
+-- Politiques pour la table "user_sagas"
+create policy "Les utilisateurs authentifiés peuvent voir toutes les interactions" 
+  on public.user_sagas for select to authenticated using (true);
+
+create policy "Les utilisateurs peuvent tout faire sur leurs propres interactions" 
+  on public.user_sagas for all to authenticated 
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+  -- 1. Permettre à tout le monde de VOIR les profils (indispensable pour afficher les pseudos)
+alter table public.profiles enable row level security;
+
+drop policy if exists "Tout le monde peut lire les profils" on public.profiles;
+create policy "Tout le monde peut lire les profils" 
+on public.profiles for select 
+using (true);
+
+-- 2. Permettre à tout le monde de VOIR qui suit quelle saga
+alter table public.user_sagas enable row level security;
+
+drop policy if exists "Tout le monde peut voir les interactions des sagas" on public.user_sagas;
+create policy "Tout le monde peut voir les interactions des sagas" 
+on public.user_sagas for select 
+using (true);

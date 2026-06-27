@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
-import { Lock, Mail, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { Lock, Mail, Loader2, User } from 'lucide-react';
 import logo from '@/assets/chaotic-librairy-logo.png';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -17,7 +18,15 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              username: username,
+            },
+          },
+        });
         if (error) throw error;
         setMessage({
           type: 'success',
@@ -66,6 +75,30 @@ export default function Auth() {
           )}
 
           <div className="space-y-4 rounded-md shadow-sm">
+            {isSignUp && (
+              <div>
+                <label
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                  htmlFor="user-username"
+                >
+                  Pseudo
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    id="user-username"
+                    type="text"
+                    required={isSignUp}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="block w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:focus:bg-slate-950 sm:text-sm"
+                    placeholder="Ton pseudo unique"
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <label
                 className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
