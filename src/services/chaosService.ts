@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { Book, EBookStatus } from '@/types/books.type';
-import { ChallengePoolItem } from '@/types/challenges.type';
+import { ChallengePoolItem, EChallengeStatus, EChallengeType } from '@/types/challenges.type';
 import { getCurrentXp, updateXpWithReason } from '@/utils/xpUtils';
 
 /**
@@ -12,22 +12,40 @@ export const triggerChaosChallenge = async (): Promise<string | null> => {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // 🌟 MODIFICATION ICI : On filtre sur le type du challenge_pool directement dans la requête
   const { data: userChallenges, error } = await supabase
     .from('user_challenges')
     .select('id, status, challenge_pool(*)')
     .eq('user_id', user.id)
-    .neq('status', 'en_cours');
+    .neq('status', EChallengeStatus.EnCours)
+    .eq('challenge_pool.type', EChallengeType.Chaos);
 
   if (error) throw error;
 
-  if (userChallenges && userChallenges.length > 0) {
-    const randomSelection = userChallenges[Math.floor(Math.random() * userChallenges.length)];
+  // À cause du filtre sur la table jointe, Supabase peut retourner des lignes
+  // où challenge_pool est null (si c'était un mensuel). On filtre donc le tableau en JS pour être 100% safe :
+  const validChaosChallenges = (userChallenges || []).filter((uc) => {
+    const pool = uc.challenge_pool;
+    if (!pool) return false;
+    // Si c'est un tableau (cas des relations Supabase parfois), on vérifie le premier élément
+    if (Array.isArray(pool)) {
+      return pool[0]?.type === 'chaos';
+    }
+    return pool.type === 'chaos';
+  });
+
+  if (validChaosChallenges.length > 0) {
+    // 🎲 On pioche uniquement parmi les VRAIS défis du chaos valides
+    const randomSelection =
+      validChaosChallenges[Math.floor(Math.random() * validChaosChallenges.length)];
     const rawPool = randomSelection.challenge_pool;
+
     const randomChallengeArray: ChallengePoolItem[] = Array.isArray(rawPool)
       ? (rawPool as ChallengePoolItem[])
       : rawPool
         ? [rawPool as ChallengePoolItem]
         : [];
+
     const randomChallenge =
       randomChallengeArray && randomChallengeArray.length > 0 ? randomChallengeArray[0] : null;
 
