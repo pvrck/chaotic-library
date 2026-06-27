@@ -20,7 +20,7 @@ create table public.saga_volumes (
   title text not null,
   page_count int,
   cover_url text,
-  isbn text,
+  isbn text
   
   -- Contrainte d'unicité : Pas deux fois le même tome dans la même saga !
   unique (saga_id, volume_number)
