@@ -1,4 +1,5 @@
 import { ChallengeBoard } from '@/components/Dashboard/ChallengeBoard';
+import { CommunityPreview } from '@/components/Dashboard/CommunityPreview';
 import { ExperienceBar } from '@/components/Dashboard/ExperienceBar';
 import { Stats } from '@/components/Dashboard/Stats/Stats';
 import { XpHistoryFeed } from '@/components/Dashboard/XpHistoryFeed';
@@ -27,7 +28,17 @@ export const DashboardPage = () => {
         <ExperienceBar />
         <Stats />
         <ChallengeBoard />
-        <XpHistoryFeed />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Journal d'XP prend 2 colonnes sur 3 sur grand écran */}
+          <div className="lg:col-span-2">
+            <XpHistoryFeed />
+          </div>
+
+          {/* La Preview Communauté prend la 3ème colonne */}
+          <div className="lg:col-span-1">
+            <CommunityPreview />
+          </div>
+        </div>
       </div>
     </div>
   );

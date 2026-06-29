@@ -3,7 +3,7 @@ import { useBooks } from '@/hooks/useBooks';
 import { supabase } from '@/lib/supabaseClient';
 import { handleXpGain, triggerChaosChallenge } from '@/services/chaosService';
 import { Book, EBookStatus } from '@/types/books.type';
-import { Book as BookIcon, Loader2, PlusCircle, Sparkles } from 'lucide-react';
+import { Book as BookIcon, Loader2, PlusCircle, Sparkles, Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { Dices } from 'lucide-react';
 import { BookDetailsModal } from '@/components/Books/BookDetailsModal';
@@ -22,12 +22,10 @@ export const BooksPage = () => {
   const [chaosEvent, setChaosEvent] = useState<string | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
-
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
 
   const b = useBooks();
 
-  // 🌟 Construction d'un dictionnaire simple saga_id -> saga_name pour notre algorithme
   const sagasMap = b.books.reduce(
     (acc, book) => {
       if (book.saga_id && book.saga_name) {
@@ -37,6 +35,15 @@ export const BooksPage = () => {
     },
     {} as Record<string, string>
   );
+
+  // 📅 Fonction utilitaire pour grouper par Mois Année
+  const getMonthYearLabel = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Date inconnue';
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      month: 'long',
+      year: 'numeric',
+    });
+  };
 
   const updateStatus = async (id: string, nextStatus: EBookStatus) => {
     try {
@@ -48,7 +55,6 @@ export const BooksPage = () => {
       const { error } = await supabase.from('books').update(updateData).eq('id', id);
       if (error) throw error;
 
-      // Vérification des défis
       if (nextStatus === EBookStatus.Lu || nextStatus === EBookStatus.Abandonne) {
         const result = await checkAndUnlockChallenges(profile!.id);
 
@@ -62,17 +68,14 @@ export const BooksPage = () => {
         }
       }
 
-      // 🎲 Jet du Chaos (33%)
       if (nextStatus === EBookStatus.Lu && Math.random() < 0.33) {
         const msg = await triggerChaosChallenge();
         if (msg) setChaosEvent(msg);
       }
 
-      // 🏆 Gestion de l'XP
       const targetBook = b.books.find((book) => book.id === id);
       await handleXpGain(nextStatus, targetBook);
 
-      // 🚀 Vérification des succès (si le livre est terminé)
       if (nextStatus === EBookStatus.Lu) {
         const promises = [
           checkAchievements(session?.user.id, EAchievementConditionType.LivresLus),
@@ -89,15 +92,11 @@ export const BooksPage = () => {
           );
         }
 
-        // 1. On attend tous les résultats
         const results = await Promise.all(promises);
-
-        // 2. On aplatit le tableau et on filtre pour ne garder que les titres trouvés
         const unlockedTitles = results
           .flat()
           .filter((title) => title !== undefined && title !== null);
 
-        // 3. On ne fait quelque chose QUE s'il y a des titres réellement débloqués
         if (unlockedTitles.length > 0) {
           if (unlockedTitles.length === 1) {
             toast.success(`Bravo ! Succès débloqué : ${unlockedTitles[0]}`);
@@ -120,14 +119,9 @@ export const BooksPage = () => {
 
   const handleDeleteBook = async (bookId: string) => {
     try {
-      const { error } = await supabase
-        .from('books') // Utilise le nom exact de ta table de liaison/livres
-        .delete()
-        .eq('id', bookId);
+      const { error } = await supabase.from('books').delete().eq('id', bookId);
 
       if (error) throw error;
-
-      // Mise à jour de l'état local pour faire disparaître le livre proprement
       b.fetchBooks();
     } catch (err) {
       console.error('Erreur lors de la suppression du livre :', err);
@@ -143,13 +137,16 @@ export const BooksPage = () => {
     );
   }
 
+  // Determine si on doit activer l'affichage chronologique par mois
+  const isChronologicalLuView =
+    b.statusFilter === EBookStatus.Lu && (b.sortBy === 'added_desc' || b.sortBy === 'added_asc');
+
   return (
     <div className="animate-in fade-in duration-200">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <BookIcon className="h-6 w-6 text-indigo-600" /> Ma Bibliothèque
         </h1>
-        {/* 🌟 Groupe de boutons d'actions */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsDrawModalOpen(true)}
@@ -192,7 +189,6 @@ export const BooksPage = () => {
         <div className="flex gap-1 overflow-x-auto pb-1">
           {(['Tous', ...Object.values(EBookStatus)] as const).map((st) => {
             const allBooks = b.books;
-
             const count =
               st === 'Tous' ? allBooks.length : allBooks.filter((bk) => bk.status === st).length;
 
@@ -210,7 +206,6 @@ export const BooksPage = () => {
                 }`}
               >
                 {st === EBookStatus.Abandonne ? 'Abandonnés' : st}
-                {/* 2. On affiche le badge de nombre */}
                 <span
                   className={`px-1.5 py-0.5 rounded-md text-[10px] ${
                     b.statusFilter === st ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700'
@@ -223,13 +218,63 @@ export const BooksPage = () => {
           })}
         </div>
 
-        {/* 📚 LISTE DES LIVRES */}
+        {/* 📚 LISTE DES LIVRES COULOIR CENTRAL */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden shadow-xs">
           {b.currentItems.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400 italic">
               Aucun livre ne correspond à tes critères de recherche... 🕸️
             </div>
+          ) : isChronologicalLuView ? (
+            /* 📅 REGROUPEMENT PAR MOIS CHRONOLOGIQUE DISCRET */
+            (() => {
+              let currentMonthLabel = '';
+
+              return (
+                <div className="divide-y divide-slate-100 dark:divide-slate-700/40">
+                  {b.currentItems.map((book) => {
+                    const bookMonth = getMonthYearLabel(book.finished_at);
+                    const showHeader = bookMonth !== currentMonthLabel;
+
+                    if (showHeader) {
+                      currentMonthLabel = bookMonth;
+                    }
+
+                    // Calcul du total mensuel sur l'intégralité de tes livres filtrés (pas seulement la page courante)
+                    const countForThisMonth = b.filteredAndSortedBooks.filter(
+                      (bk) => getMonthYearLabel(bk.finished_at) === bookMonth
+                    ).length;
+
+                    return (
+                      <div key={book.id} className="block">
+                        {showHeader && (
+                          <div className="bg-slate-50/70 dark:bg-slate-900/40 px-4 py-2 flex items-center justify-between border-b border-slate-100 dark:border-slate-700/30">
+                            <span className="text-xs font-extrabold text-slate-700 dark:text-slate-300 capitalize flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5 text-indigo-500" /> {bookMonth}
+                            </span>
+                            <span className="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-black px-2 py-0.5 rounded-md border border-indigo-100/30">
+                              {countForThisMonth}{' '}
+                              {countForThisMonth > 1 ? 'livres lus' : 'livre lu'}
+                            </span>
+                          </div>
+                        )}
+                        <BookItem
+                          book={book}
+                          onStatusChange={updateStatus}
+                          onOpenDetails={b.handleOpenDetails}
+                          onEditClick={(bk) => {
+                            setBookToEdit(bk);
+                            setIsFormModalOpen(true);
+                          }}
+                          onDeleteBook={handleDeleteBook}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()
           ) : (
+            /* 🔤 AFFICHAGE STANDARD EN BLOC CONTINU (Si tri par Titre, Auteur ou Saga) */
             <div className="divide-y divide-slate-100 dark:divide-slate-700/40">
               {b.currentItems.map((book) => (
                 <BookItem

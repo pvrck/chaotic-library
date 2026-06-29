@@ -176,6 +176,7 @@ export default function Layout() {
                   : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300'
               }`
             }
+            end
           >
             <span className="text-lg select-none">{profile?.avatar_url || '📖'}</span>
             <span className="truncate">{profile?.username || 'Pénélope'}</span>

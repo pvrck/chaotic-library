@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { searchGoogleBooks } from '@/services/googleBooksService';
 import { Book, BookDetails, EBookStatus, BookFormat } from '@/types/books.type';
 import { SortOption } from '@/types/filters.type';
+import { useAuth } from '@/context/AuthContext';
 
-export const useBooks = () => {
+export const useBooks = (targetUserId?: string) => {
+  const { session } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -19,27 +21,39 @@ export const useBooks = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  const fetchBooks = async () => {
+  // 🌟 Déterminer quel ID on cible (Celui passé en paramètre, ou le mien par défaut)
+  const userIdToFetch = targetUserId || session?.user?.id;
+
+  // Passer en useCallback pour pouvoir l'appeler n'importe où sans boucle infinie
+  const fetchBooks = useCallback(async () => {
+    if (!userIdToFetch) return;
     try {
-      const { data, error } = await supabase.from('books').select('*');
+      setLoading(true);
+      // 🌟 On ajoute le filtre .eq('user_id') explicitement !
+      const { data, error } = await supabase.from('books').select('*').eq('user_id', userIdToFetch);
+
       if (error) throw error;
       setBooks((data as Book[]) || []);
     } catch (error) {
-      console.error(error);
+      console.error('Erreur fetchBooks:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userIdToFetch]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadInitialData = async () => {
+      if (!userIdToFetch) return;
       try {
-        const { data, error } = await supabase.from('books').select('*');
+        const { data, error } = await supabase
+          .from('books')
+          .select('*')
+          .eq('user_id', userIdToFetch); // 🌟 Filtre ici aussi
+
         if (error) throw error;
 
-        // On vérifie que le composant est toujours affiché avant de changer l'état
         if (isMounted) {
           setBooks((data as Book[]) || []);
         }
@@ -54,11 +68,10 @@ export const useBooks = () => {
 
     loadInitialData();
 
-    // Fonction de nettoyage (clean-up) si l'utilisateur quitte la page rapidement
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [userIdToFetch]);
 
   const handleOpenDetails = async (book: Book) => {
     setSelectedBook(book);
@@ -86,7 +99,7 @@ export const useBooks = () => {
     }
   };
 
-  // --- TRAITEMENT DES DONNÉES (FILTRE & TRI) ---
+  // --- TRAITEMENT DES DONNÉES (FILTRE & TRI RESTENT IDENTIQUES) ---
   const filteredAndSortedBooks = books
     .filter((book) => {
       const matchesSearch =

@@ -19,6 +19,7 @@ import { AdministrationUsersPage } from './pages/Administration/AdministrationUs
 import { ChangelogPage } from './pages/ChangelogPage';
 import { CommunityPage } from './pages/CommunityPage';
 import SagasPage from './pages/SagasPage';
+import { UserProfilePage } from './pages/UserProfilePage';
 import { XpHistoryPage } from './pages/XpHistoryPage';
 
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
           <Route path={route.HISTORIC_XP} element={<XpHistoryPage />} />
           <Route path={route.COMMUNITY} element={<CommunityPage />} />
           <Route path={route.SAGAS} element={<SagasPage />} />
+          <Route path={route.COMMUNITY_USER} element={<UserProfilePage />} />
         </Route>
 
         <Route element={<AdminRouteGuard />}>

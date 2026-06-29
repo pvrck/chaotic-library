@@ -225,6 +225,7 @@ export type Database = {
           created_at: string | null;
           email: string;
           id: string;
+          is_private: boolean;
           role: Database['public']['Enums']['app_role'];
           updated_at: string | null;
           username: string | null;
@@ -235,6 +236,7 @@ export type Database = {
           created_at?: string | null;
           email: string;
           id: string;
+          is_private?: boolean;
           role?: Database['public']['Enums']['app_role'];
           updated_at?: string | null;
           username?: string | null;
@@ -245,6 +247,7 @@ export type Database = {
           created_at?: string | null;
           email?: string;
           id?: string;
+          is_private?: boolean;
           role?: Database['public']['Enums']['app_role'];
           updated_at?: string | null;
           username?: string | null;
@@ -540,7 +543,9 @@ export type Database = {
         Row: {
           avatar_url: string | null;
           id: string | null;
+          is_private: boolean | null;
           last_activity: string | null;
+          latest_achievements: Json | null;
           registration_date: string | null;
           username: string | null;
           xp: number | null;
@@ -548,7 +553,9 @@ export type Database = {
         Insert: {
           avatar_url?: string | null;
           id?: string | null;
+          is_private?: boolean | null;
           last_activity?: never;
+          latest_achievements?: never;
           registration_date?: string | null;
           username?: string | null;
           xp?: number | null;
@@ -556,7 +563,9 @@ export type Database = {
         Update: {
           avatar_url?: string | null;
           id?: string | null;
+          is_private?: boolean | null;
           last_activity?: never;
+          latest_achievements?: never;
           registration_date?: string | null;
           username?: string | null;
           xp?: number | null;
@@ -566,6 +575,8 @@ export type Database = {
     };
     Functions: {
       check_yearly_goals_cron: { Args: never; Returns: undefined };
+      expire_overdue_chaos_challenges: { Args: never; Returns: undefined };
+      process_monthly_pal_balance_challenge: { Args: never; Returns: undefined };
       reset_monthly_challenges: { Args: never; Returns: undefined };
       update_xp_with_reason: {
         Args: { log_reason: string; new_xp: number; target_user_id: string };

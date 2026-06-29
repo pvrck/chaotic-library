@@ -30,6 +30,7 @@ const mockUsers: Profile[] = [
     xp: 100,
     avatar_url: '📖',
     updated_at: '2026-01-01',
+    is_private: false,
   },
   {
     id: '2',
@@ -39,6 +40,7 @@ const mockUsers: Profile[] = [
     xp: 200,
     avatar_url: '📖',
     updated_at: '2026-01-01',
+    is_private: false,
   },
 ];
 
