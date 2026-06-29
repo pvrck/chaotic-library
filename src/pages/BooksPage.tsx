@@ -24,8 +24,6 @@ export const BooksPage = () => {
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
 
-  const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
-
   const b = useBooks();
 
   const sagasMap = b.books.reduce(
