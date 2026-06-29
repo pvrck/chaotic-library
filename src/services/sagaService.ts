@@ -9,7 +9,7 @@ interface DBUserSaga {
   profiles: {
     username: string | null;
     avatar_url: string | null;
-  } | null; // 🌟 Jointure pour le profil social
+  } | null;
 }
 
 interface DBSagaRow {
@@ -22,6 +22,7 @@ interface DBSagaRow {
   user_sagas: DBUserSaga[] | null;
   books: Pick<Book, 'user_id' | 'status' | 'volume_number'>[] | null;
 }
+
 export const sagaService = {
   /**
    * Récupère le catalogue des sagas enrichi des interactions de l'utilisateur connecté
@@ -36,8 +37,8 @@ export const sagaService = {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // 1. On prépare la requête de base
-    let query = supabase.from('sagas').select(
+    // 1. On prépare la requête de base (SANS filtrer user_sagas à la source pour garder les autres lecteurs !)
+    const query = supabase.from('sagas').select(
       `
         *,
         user_sagas(
@@ -51,17 +52,7 @@ export const sagaService = {
       { count: 'exact' }
     );
 
-    // 2. 🌟 FILTRAGE AVANCÉ CÔTÉ SERVEUR
-    // Si on cherche uniquement les favoris de l'utilisateur
-    if (statusFilter === 'favorites') {
-      query = query.eq('user_sagas.user_id', currentUserId).eq('user_sagas.is_favorite', true);
-    }
-    // Si on cherche un statut précis (En cours, À lire, etc.)
-    else if (statusFilter !== 'all') {
-      query = query.eq('user_sagas.user_id', currentUserId).eq('user_sagas.status', statusFilter);
-    }
-
-    // 3. Exécution avec la pagination
+    // 2. Exécution avec la pagination et le tri par titre
     const {
       data: sagas,
       count,
@@ -77,6 +68,7 @@ export const sagaService = {
       const currentUserSaga = saga.user_sagas?.find((us) => us.user_id === currentUserId);
 
       // --- 🧠 CALCUL AUTOMATIQUE DU STATUT ---
+      // Si l'utilisateur a modifié manuellement, on prend sa valeur, sinon on calcule par rapport à ses livres
       let calculatedStatus: ESagaUserStatus | null = currentUserSaga?.status || null;
 
       if (!calculatedStatus) {
@@ -103,14 +95,30 @@ export const sagaService = {
       }
 
       // --- 👥 ASPECT SOCIAL DÉTAILLÉ ---
+      // On liste TOUS les profils qui ont une interaction (soit un statut calculé/manuel, soit un favori)
       const readers = (saga.user_sagas || [])
-        .filter((us) => us.status || us.is_favorite) // 🌟 Pris en compte dès qu'il y a un statut OU un favori
+        .filter((us) => us.status || us.is_favorite)
         .map((us) => ({
           user_id: us.user_id,
-          status: us.status as ESagaUserStatus | null, // 🌟 Peut être null si l'utilisateur l'a juste en favori
+          status: us.status as ESagaUserStatus | null,
           display_name: us.profiles?.username || 'Lecteur mystère',
           avatar_url: us.profiles?.avatar_url || undefined,
         }));
+
+      // 🌟 SÉCURITÉ : Si l'utilisateur connecté a un statut calculé grâce à ses livres,
+      // mais n'a pas encore de ligne physique dans `user_sagas`, on l'ajoute dynamiquement
+      // dans la liste des lecteurs pour qu'il apparaisse immédiatement !
+      const isAlreadyInReaders = readers.some((r) => r.user_id === currentUserId);
+      if (!isAlreadyInReaders && calculatedStatus) {
+        // Optionnel : tu peux aller chercher le profil de l'utilisateur connecté si tu veux son vrai pseudo,
+        // ou laisser 'Moi' / 'Lecteur mystère' en attendant un refresh.
+        readers.push({
+          user_id: currentUserId,
+          status: calculatedStatus,
+          display_name: 'Vous',
+          avatar_url: undefined, // Sera complété au prochain reload ou via ton contexte global
+        });
+      }
 
       return {
         id: saga.id,
@@ -127,6 +135,8 @@ export const sagaService = {
       };
     });
 
+    // 3. 🎯 FILTRAGE PRÉCIS CÔTÉ CLIENT
+    // Maintenant que l'on a le statut calculé (algorithmique) ou manuel, on filtre sans casser l'aspect social
     const filteredData =
       statusFilter !== 'all'
         ? mappedData.filter((s) =>
