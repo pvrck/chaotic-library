@@ -6,6 +6,7 @@ export const CHANGELOG = '/changelog';
 export const HISTORIC_XP = '/historique-xp';
 export const COMMUNITY = '/communaute';
 export const SAGAS = '/sagas';
+export const COMMUNITY_USER = `${COMMUNITY}/:userId`;
 
 export const ADMIN = '/admin';
 export const ADMIN_UTILISATEURS = `${ADMIN}/utilisateurs`;

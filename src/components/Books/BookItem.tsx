@@ -1,13 +1,16 @@
-import { Edit3, BookOpen, Trash2 } from 'lucide-react';
+import { Edit3, BookOpen, Trash2, PlusCircle } from 'lucide-react';
 import { formatDate } from '@/utils/dateUtils';
 import { Book, EBookStatus } from '@/types/books.type';
 
 interface BookItemProps {
   book: Book;
-  onStatusChange: (id: string, nextStatus: EBookStatus) => Promise<void>;
+  onStatusChange?: (id: string, nextStatus: EBookStatus) => Promise<void>;
   onOpenDetails: (book: Book) => void;
-  onEditClick: (book: Book) => void;
-  onDeleteBook: (id: string) => void;
+  onEditClick?: (book: Book) => void;
+  onDeleteBook?: (id: string) => void;
+  isPublicProfile?: boolean;
+  onCopyToMyPal?: (book: Book) => void;
+  isAlreadyInMyLibrary?: boolean;
 }
 
 export const BookItem = ({
@@ -16,10 +19,16 @@ export const BookItem = ({
   onOpenDetails,
   onEditClick,
   onDeleteBook,
+  isPublicProfile = false,
+  onCopyToMyPal,
+  isAlreadyInMyLibrary,
 }: BookItemProps) => {
   // Fonction de confirmation rapide pour éviter les miss-clicks
   const handleDeleteClick = () => {
-    if (window.confirm(`Es-tu sûre de vouloir supprimer "${book.title}" de ta bibliothèque ?`)) {
+    if (
+      onDeleteBook &&
+      window.confirm(`Es-tu sûre de vouloir supprimer "${book.title}" de ta bibliothèque ?`)
+    ) {
       onDeleteBook(book.id!);
     }
   };
@@ -65,7 +74,7 @@ export const BookItem = ({
             <button
               onClick={(e) => {
                 e.stopPropagation(); // Évite d'ouvrir les détails
-                onEditClick(book);
+                if (onEditClick) onEditClick(book);
               }}
               className="p-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
               title="Modifier les détails"
@@ -108,50 +117,67 @@ export const BookItem = ({
       </div>
 
       {/* BOUTONS D'ACTION */}
-      <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-        {book.status === EBookStatus.ALire && (
-          <button
-            onClick={() => onStatusChange(book.id!, EBookStatus.EnCours)}
-            className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            ⚔️ Commencer <span className="text-[10px] opacity-90 font-normal">(+5 XP)</span>
-          </button>
-        )}
-        {book.status === EBookStatus.EnCours && (
-          <>
+      {isPublicProfile ? (
+        <div className="flex items-center gap-2">
+          {isAlreadyInMyLibrary ? (
+            <span className="text-xs bg-slate-100 text-slate-400 px-2 py-1 rounded-lg italic">
+              Déjà dans ta PAL 📚
+            </span>
+          ) : (
             <button
-              onClick={() => onStatusChange(book.id!, EBookStatus.Lu)}
-              className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+              onClick={() => onCopyToMyPal?.(book)}
+              className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1 cursor-pointer"
             >
-              🏆 Terminer <span className="text-[10px] opacity-90 font-normal">(+120 XP)</span>
+              <PlusCircle className="h-3.5 w-3.5" /> Piquer l'idée
             </button>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+          {onStatusChange && book.status === EBookStatus.ALire && (
             <button
-              onClick={() => onStatusChange(book.id!, EBookStatus.Abandonne)}
-              className="cursor-pointer bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 font-medium px-3 py-1.5 rounded-xl border border-slate-200 hover:border-rose-200 transition-all"
+              onClick={() => onStatusChange(book.id!, EBookStatus.EnCours)}
+              className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
-              Abandonner
+              ⚔️ Commencer <span className="text-[10px] opacity-90 font-normal">(+5 XP)</span>
             </button>
-          </>
-        )}
-        {book.status === EBookStatus.Lu && (
-          <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
-            🎉 Terminé
-          </span>
-        )}
-        {book.status === EBookStatus.Abandonne && (
-          <span className="text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 font-medium px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
-            🛑 Abandonné
-          </span>
-        )}
+          )}
+          {onStatusChange && book.status === EBookStatus.EnCours && (
+            <>
+              <button
+                onClick={() => onStatusChange(book.id!, EBookStatus.Lu)}
+                className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                🏆 Terminer <span className="text-[10px] opacity-90 font-normal">(+120 XP)</span>
+              </button>
+              <button
+                onClick={() => onStatusChange(book.id!, EBookStatus.Abandonne)}
+                className="cursor-pointer bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 font-medium px-3 py-1.5 rounded-xl border border-slate-200 hover:border-rose-200 transition-all"
+              >
+                Abandonner
+              </button>
+            </>
+          )}
+          {book.status === EBookStatus.Lu && (
+            <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
+              🎉 Terminé
+            </span>
+          )}
+          {book.status === EBookStatus.Abandonne && (
+            <span className="text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 font-medium px-2.5 py-1 rounded-lg flex items-center gap-1 select-none">
+              🛑 Abandonné
+            </span>
+          )}
 
-        <button
-          onClick={handleDeleteClick}
-          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors cursor-pointer"
-          title="Supprimer le livre"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
+          <button
+            onClick={handleDeleteClick}
+            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors cursor-pointer"
+            title="Supprimer le livre"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

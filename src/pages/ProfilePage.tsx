@@ -1,7 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { AlertCircle, Key, Sparkles, User } from 'lucide-react';
+import { AlertCircle, Key, Sparkles, User, EyeOff, Eye } from 'lucide-react';
 import { AVAILABLE_AVATARS } from '@/constants/available_avatars';
 import { AchievementsGrid } from '@/components/Profile/AchievementsGrid';
 
@@ -12,6 +12,7 @@ export const ProfilePage = () => {
 
   const [username, setUsername] = useState(profile?.username || '');
   const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatar_url || '📖');
+  const [isPrivate, setIsPrivate] = useState<boolean>(profile?.is_private || false); // 🌟 Nouvel état
 
   // États mot de passe
   const [newPassword, setNewPassword] = useState('');
@@ -35,6 +36,7 @@ export const ProfilePage = () => {
         .update({
           username: username.trim(),
           avatar_url: selectedAvatar,
+          is_private: isPrivate, // 🌟 Sauvegarde en BDD
         })
         .eq('id', profile.id);
 
@@ -83,13 +85,13 @@ export const ProfilePage = () => {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setActiveTab('achievements')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${activeTab === 'achievements' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500'}`}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeTab === 'achievements' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500'}`}
           >
             Mes Succès
           </button>
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${activeTab === 'profile' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500'}`}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeTab === 'profile' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500'}`}
           >
             Mon Profil
           </button>
@@ -104,7 +106,7 @@ export const ProfilePage = () => {
               <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-3xl shadow-inner">
                 {selectedAvatar}
               </div>
-              <div className="text-center sm:text-left space-y-1">
+              <div className="text-center sm:text-left space-y-1 flex-1 w-full">
                 <div className="flex items-center justify-center sm:justify-start gap-2">
                   <h3 className="font-black text-lg text-slate-800 dark:text-white">
                     {profile?.username || 'Aventurière'}
@@ -112,6 +114,12 @@ export const ProfilePage = () => {
                   <span className="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 text-slate-500">
                     {profile?.role || 'user'}
                   </span>
+                  {/* Petit indicateur visuel Privé/Public sur ta carte */}
+                  {isPrivate && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 flex items-center gap-1">
+                      <EyeOff className="h-2.5 w-2.5" /> Privé
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-400">{profile?.email}</p>
                 <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 justify-center sm:justify-start">
@@ -159,6 +167,32 @@ export const ProfilePage = () => {
                     />
                   </div>
 
+                  {/* 🌟 LE TOGGLE PRIVÉ / PUBLIC */}
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div className="space-y-0.5 max-w-[80%]">
+                      <span className="block font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        {isPrivate ? (
+                          <EyeOff className="h-3.5 w-3.5 text-amber-500" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5 text-indigo-500" />
+                        )}
+                        Rendre mon profil privé
+                      </span>
+                      <span className="block text-[10px] text-slate-400">
+                        Ta bibliothèque et tes succès seront masqués pour la guilde.
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isPrivate}
+                        onChange={(e) => setIsPrivate(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                  </div>
+
                   <div>
                     <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2">
                       Choisir un blason d'avatar
@@ -192,7 +226,7 @@ export const ProfilePage = () => {
                 </form>
               </div>
 
-              {/* FORMULAIRE SÉCURITÉ / MOT DE PASSE */}
+              {/* FORMULAIRE SÉCURITÉ */}
               <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/50 space-y-4">
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <Key className="h-3.5 w-3.5 text-indigo-500" /> Coffre-fort (Mot de passe)
