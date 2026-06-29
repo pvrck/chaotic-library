@@ -63,6 +63,7 @@ describe('Context - AuthContext', () => {
     xp: 1250,
     updated_at: '2026-06-01',
     avatar_url: null,
+    is_private: false,
   };
 
   beforeEach(() => {

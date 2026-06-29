@@ -8,32 +8,43 @@ interface UserGoalRow {
   target_count: number;
 }
 
-export const AchievementsGrid = ({ userId }: { userId: string | undefined }) => {
+interface AchievementsGridProps {
+  userId: string | undefined;
+  onlyShowUnlocked?: boolean;
+}
+
+export const AchievementsGrid = ({ userId, onlyShowUnlocked = false }: AchievementsGridProps) => {
   const [all, setAll] = useState<Achievement[]>([]);
-  // On récupère 'achievement_id' et 'unlocked_at'
   const [unlocked, setUnlocked] = useState<{ achievement_id: string; unlocked_at: string }[]>([]);
   const [userGoals, setUserGoals] = useState<UserGoalRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
     const fetch = async () => {
-      const { data: defs } = await supabase.from('achievements_definitions').select('*');
+      try {
+        setLoading(true);
+        const { data: defs } = await supabase.from('achievements_definitions').select('*');
 
-      // On sélectionne unlocked_at pour en extraire l'année plus tard
-      const { data: userAch } = await supabase
-        .from('user_achievements')
-        .select('achievement_id, unlocked_at')
-        .eq('user_id', userId);
+        const { data: userAch } = await supabase
+          .from('user_achievements')
+          .select('achievement_id, unlocked_at')
+          .eq('user_id', userId);
 
-      const { data: goals } = await supabase
-        .from('user_goals')
-        .select('year, target_count')
-        .eq('user_id', userId)
-        .order('year', { ascending: true });
+        const { data: goals } = await supabase
+          .from('user_goals')
+          .select('year, target_count')
+          .eq('user_id', userId)
+          .order('year', { ascending: true });
 
-      if (defs) setAll(defs as unknown as Achievement[]);
-      if (userAch) setUnlocked(userAch as { achievement_id: string; unlocked_at: string }[]);
-      if (goals) setUserGoals(goals as UserGoalRow[]);
+        if (defs) setAll(defs as unknown as Achievement[]);
+        if (userAch) setUnlocked(userAch as { achievement_id: string; unlocked_at: string }[]);
+        if (goals) setUserGoals(goals as UserGoalRow[]);
+      } catch (err) {
+        console.error('Erreur chargement succès:', err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetch();
   }, [userId]);
@@ -45,19 +56,17 @@ export const AchievementsGrid = ({ userId }: { userId: string | undefined }) => 
 
   // Génération des tuiles virtuelles à partir des objectifs
   const dynamicGoalAchievements = userGoals
-    .filter((goal) => goal.year < currentYear) // <-- CHANGEMENT ICI : Strictement inférieur à l'année en cours
+    .filter((goal) => goal.year < currentYear)
     .map((goal) => {
-      // Le reste de ton code reste le même, simple et propre :
       const isUnlocked = unlocked.some((u) => {
         if (!u.unlocked_at) return false;
 
         const dateDate = new Date(u.unlocked_at);
         const unlockedYear = dateDate.getFullYear();
-        const unlockedMonth = dateDate.getMonth(); // 0 = Janvier, 11 = Décembre
+        const unlockedMonth = dateDate.getMonth();
 
         if (u.achievement_id !== goalDefinition?.id) return false;
 
-        // Le succès est valide si débloqué en décembre de l'année X ou en janvier de l'année X + 1
         return (
           (unlockedYear === goal.year && unlockedMonth === 11) ||
           (unlockedYear === goal.year + 1 && unlockedMonth === 0)
@@ -74,15 +83,44 @@ export const AchievementsGrid = ({ userId }: { userId: string | undefined }) => 
       };
     });
 
+  if (loading) {
+    return (
+      <div className="text-center py-8 text-xs text-slate-400 italic">
+        Chargement des trophées... 🏆
+      </div>
+    );
+  }
+
+  // 🌟 Filtrage des listes si on ne veut voir QUE le palmarès débloqué
+  const displayedStandards = standardAchievements.filter(
+    (ach) => !onlyShowUnlocked || unlocked.some((u) => u.achievement_id === ach.id)
+  );
+
+  const displayedDynamics = dynamicGoalAchievements.filter(
+    (ach) => !onlyShowUnlocked || ach.isUnlocked
+  );
+
+  if (displayedStandards.length === 0 && displayedDynamics.length === 0) {
+    return (
+      <div className="text-center py-12 text-slate-400 text-xs italic">
+        Aucun succès débloqué pour le moment... 🐢
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* 1. Succès Standards */}
-      {standardAchievements.map((ach) => {
+      {displayedStandards.map((ach) => {
         const isUnlocked = ach.id && unlocked.some((u) => u.achievement_id === ach.id);
         return (
           <div
             key={ach.id}
-            className={`p-4 rounded-2xl border ${isUnlocked ? 'bg-indigo-50 border-indigo-100 dark:bg-indigo-900/20' : 'bg-slate-50 border-slate-100 dark:bg-slate-800 opacity-60'}`}
+            className={`p-4 rounded-2xl border transition-all ${
+              isUnlocked
+                ? 'bg-indigo-50 border-indigo-100 dark:bg-indigo-900/20'
+                : 'bg-slate-50 border-slate-100 dark:bg-slate-800 opacity-60'
+            }`}
           >
             <div className="flex items-center gap-3">
               <div
@@ -100,10 +138,14 @@ export const AchievementsGrid = ({ userId }: { userId: string | undefined }) => 
       })}
 
       {/* 2. Succès Annuels Virtuels */}
-      {dynamicGoalAchievements.map((ach) => (
+      {displayedDynamics.map((ach) => (
         <div
           key={ach.id}
-          className={`p-4 rounded-2xl border ${ach.isUnlocked ? 'bg-indigo-50 border-indigo-100 dark:bg-indigo-900/20' : 'bg-slate-50 border-slate-100 dark:bg-slate-800 opacity-60'}`}
+          className={`p-4 rounded-2xl border transition-all ${
+            ach.isUnlocked
+              ? 'bg-indigo-50 border-indigo-100 dark:bg-indigo-900/20'
+              : 'bg-slate-50 border-slate-100 dark:bg-slate-800 opacity-60'
+          }`}
         >
           <div className="flex items-center gap-3">
             <div
